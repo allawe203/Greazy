@@ -1,41 +1,45 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
 
-  const loginMutation = useMutation({
-    mutationFn: async (pwd: string) => {
-      const response = await apiRequest('POST', '/api/admin/login', { password: pwd });
-      return response;
-    },
-    onSuccess: (data: any) => {
-      if (data.success) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         localStorage.setItem('greazy_admin_session', JSON.stringify({ 
           authenticated: true, 
           token: data.token,
           expiry: data.expiry 
         }));
         setLocation('/admin/dashboard');
+      } else {
+        setError(data.error || 'Invalid password. Please try again.');
       }
-    },
-    onError: () => {
-      setError('Invalid password. Please try again.');
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    loginMutation.mutate(password);
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,11 +88,11 @@ export default function AdminLogin() {
 
             <Button
               type="submit"
-              disabled={loginMutation.isPending}
+              disabled={isLoading}
               data-testid="admin-login-button"
               className="w-full py-6 text-lg font-bold bg-[#f36e27] hover:bg-[#e05d1a]"
             >
-              {loginMutation.isPending ? (
+              {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 'Access Dashboard'
