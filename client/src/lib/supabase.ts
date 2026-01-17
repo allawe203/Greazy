@@ -40,3 +40,9 @@ export interface GalleryImage {
   title?: string;
   order_index: number;
 }
+
+export interface PlaceImage {
+  id: string;
+  image_url: string;
+  created_at?: string;
+}

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Menu, X } from 'lucide-react';
+import logo from '@assets/V1_1768668285045.png';
 
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/menu', label: 'Menu' },
   { href: '/reservations', label: 'Reservations' },
-  { href: '/our-food', label: 'Our Food' },
+  { href: '/our-place', label: 'Our Place' },
   { href: '/contact', label: 'Contact' },
 ];
 
@@ -36,12 +37,8 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center">
-              <span className="text-2xl md:text-3xl font-black tracking-tight text-[#f36e27]">
-                GREAZY
-              </span>
-            </div>
+          <Link href="/" className="flex items-center" data-testid="logo-link">
+            <img src={logo} alt="GREAZY" className="h-12 md:h-16 w-auto" />
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

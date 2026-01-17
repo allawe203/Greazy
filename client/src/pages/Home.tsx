@@ -1,3 +1,5 @@
+import heroVideo from '@assets/vecteezy_restaurant-design-tableware-waiting-for-the-guests-an_1768668278535.mp4';
+
 export default function Home() {
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -7,12 +9,8 @@ export default function Home() {
         loop
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        poster="https://images.unsplash.com/photo-1550547660-d9450f859349?w=1920&q=80"
       >
-        <source
-          src="https://cdn.coverr.co/videos/coverr-making-a-burger-3741/1080p.mp4"
-          type="video/mp4"
-        />
+        <source src={heroVideo} type="video/mp4" />
       </video>
     </div>
   );

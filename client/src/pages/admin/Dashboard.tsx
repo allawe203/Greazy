@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +20,7 @@ import {
   Loader2,
   Save,
   ImageIcon,
+  Upload,
 } from 'lucide-react';
 import {
   Dialog,
@@ -71,7 +73,12 @@ interface ContactInfo {
   twitterUrl: string;
 }
 
-type AdminTab = 'overview' | 'categories' | 'menu-items' | 'contact';
+interface PlaceImage {
+  id: string;
+  imageUrl: string;
+}
+
+type AdminTab = 'overview' | 'categories' | 'menu-items' | 'place-images' | 'contact';
 
 const defaultContact: ContactInfo = {
   id: 1,
@@ -101,6 +108,37 @@ async function apiFetch(url: string, options?: RequestInit) {
     return null;
   }
   return res.json();
+}
+
+async function uploadToSupabase(file: File, bucket: string, folder: string): Promise<{ url: string | null; error: string | null }> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, { upsert: true });
+    
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      if (uploadError.message?.includes('Bucket not found')) {
+        return { url: null, error: `Storage bucket "${bucket}" not found. Please create it in your Supabase dashboard.` };
+      }
+      if (uploadError.message?.includes('policy')) {
+        return { url: null, error: 'Storage permissions error. Please configure RLS policies for the storage bucket.' };
+      }
+      return { url: null, error: uploadError.message || 'Upload failed. Please enter an image URL manually.' };
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+    
+    return { url: publicUrl, error: null };
+  } catch (error) {
+    console.error('Upload failed:', error);
+    return { url: null, error: 'Upload failed. Please enter an image URL manually.' };
+  }
 }
 
 export default function AdminDashboard() {
@@ -134,6 +172,7 @@ export default function AdminDashboard() {
     { id: 'overview' as AdminTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'categories' as AdminTab, label: 'Categories', icon: Grid3X3 },
     { id: 'menu-items' as AdminTab, label: 'Menu Items', icon: UtensilsCrossed },
+    { id: 'place-images' as AdminTab, label: 'Our Place', icon: ImageIcon },
     { id: 'contact' as AdminTab, label: 'Contact Info', icon: Phone },
   ];
 
@@ -182,6 +221,7 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && <OverviewTab />}
         {activeTab === 'categories' && <CategoriesTab toast={toast} />}
         {activeTab === 'menu-items' && <MenuItemsTab toast={toast} />}
+        {activeTab === 'place-images' && <PlaceImagesTab toast={toast} />}
         {activeTab === 'contact' && <ContactTab toast={toast} />}
       </main>
     </div>
@@ -256,10 +296,30 @@ function CategoriesTab({ toast }: { toast: any }) {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', imageUrl: '' });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories, isLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const result = await uploadToSupabase(file, 'images', 'categories');
+    setUploading(false);
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    if (result.url) {
+      setFormData({ ...formData, imageUrl: result.url });
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
+    } else {
+      toast({ title: 'Upload Failed', description: result.error || 'Unknown error', variant: 'destructive' });
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data: { name: string; imageUrl: string; id?: number }) => {
@@ -385,15 +445,21 @@ function CategoriesTab({ toast }: { toast: any }) {
               <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Category name" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" required />
             </div>
             <div>
-              <label className="block text-sm text-[#606161] mb-2">Image URL</label>
-              <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              <label className="block text-sm text-[#606161] mb-2">Image</label>
+              <div className="flex gap-2">
+                <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg or upload" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7] flex-1" />
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="border-[#3e3e3e] text-[#f5e6c7]">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
             {formData.imageUrl && (
               <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded" />
             )}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-[#f5e6c7]">Cancel</Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="bg-[#f36e27] hover:bg-[#e05d1a]">
+              <Button type="submit" disabled={saveMutation.isPending || uploading} className="bg-[#f36e27] hover:bg-[#e05d1a]">
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save
               </Button>
@@ -427,6 +493,8 @@ function MenuItemsTab({ toast }: { toast: any }) {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ name: '', description: '', price: '', imageUrl: '', categoryId: '' });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
@@ -435,6 +503,24 @@ function MenuItemsTab({ toast }: { toast: any }) {
   const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu-items'],
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const result = await uploadToSupabase(file, 'images', 'menu-items');
+    setUploading(false);
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    if (result.url) {
+      setFormData({ ...formData, imageUrl: result.url });
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
+    } else {
+      toast({ title: 'Upload Failed', description: result.error || 'Unknown error', variant: 'destructive' });
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -614,15 +700,21 @@ function MenuItemsTab({ toast }: { toast: any }) {
               </div>
             </div>
             <div>
-              <label className="block text-sm text-[#606161] mb-2">Image URL</label>
-              <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              <label className="block text-sm text-[#606161] mb-2">Image</label>
+              <div className="flex gap-2">
+                <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg or upload" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7] flex-1" />
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="border-[#3e3e3e] text-[#f5e6c7]">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
             {formData.imageUrl && (
               <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded" />
             )}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-[#f5e6c7]">Cancel</Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="bg-[#f36e27] hover:bg-[#e05d1a]">
+              <Button type="submit" disabled={saveMutation.isPending || uploading} className="bg-[#f36e27] hover:bg-[#e05d1a]">
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save
               </Button>
@@ -642,6 +734,164 @@ function MenuItemsTab({ toast }: { toast: any }) {
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-[#3e3e3e] text-[#f5e6c7] border-[#3e3e3e] hover:bg-[#4e4e4e]">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteItem && deleteMutation.mutate(deleteItem.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function PlaceImagesTab({ toast }: { toast: any }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteImage, setDeleteImage] = useState<PlaceImage | null>(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: placeImages, isLoading } = useQuery<PlaceImage[]>({
+    queryKey: ['/api/place-images'],
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const result = await uploadToSupabase(file, 'images', 'our-place');
+    setUploading(false);
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    if (result.url) {
+      setImageUrl(result.url);
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
+    } else {
+      toast({ title: 'Upload Failed', description: result.error || 'Unknown error', variant: 'destructive' });
+    }
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: { imageUrl: string }) => {
+      return apiFetch('/api/place-images', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/place-images'] });
+      setIsDialogOpen(false);
+      setImageUrl('');
+      toast({ title: 'Success', description: 'Image added successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to add image', variant: 'destructive' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiFetch(`/api/place-images/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/place-images'] });
+      setDeleteImage(null);
+      toast({ title: 'Success', description: 'Image deleted' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to delete image', variant: 'destructive' });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveMutation.mutate({ imageUrl });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-10 h-10 text-[#f36e27] animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-[#f5e6c7]">Manage Our Place</h1>
+        <Button onClick={() => setIsDialogOpen(true)} data-testid="add-place-image-button" className="bg-[#f36e27] hover:bg-[#e05d1a]">
+          <Plus className="w-5 h-5 mr-2" /> Add Image
+        </Button>
+      </div>
+
+      {!placeImages || placeImages.length === 0 ? (
+        <Card className="p-12 bg-[#2e2e2e] border-[#3e3e3e] text-center">
+          <ImageIcon className="w-16 h-16 text-[#606161] mx-auto mb-4" />
+          <p className="text-[#f5e6c7]">No images yet. Add your first image!</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {placeImages.map((image) => (
+            <Card key={image.id} className="overflow-hidden bg-[#2e2e2e] border-[#3e3e3e] group relative">
+              <div className="aspect-video">
+                <img src={image.imageUrl} alt="Place" className="w-full h-full object-cover" />
+              </div>
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeleteImage(image)}
+                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-[#2e2e2e] border-[#3e3e3e]">
+          <DialogHeader>
+            <DialogTitle className="text-[#f5e6c7]">Add Image</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-[#606161] mb-2">Image</label>
+              <div className="flex gap-2">
+                <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg or upload" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7] flex-1" required />
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="border-[#3e3e3e] text-[#f5e6c7]">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+            {imageUrl && (
+              <img src={imageUrl} alt="Preview" className="w-full h-32 object-cover rounded" />
+            )}
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-[#f5e6c7]">Cancel</Button>
+              <Button type="submit" disabled={saveMutation.isPending || uploading} className="bg-[#f36e27] hover:bg-[#e05d1a]">
+                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteImage} onOpenChange={() => setDeleteImage(null)}>
+        <AlertDialogContent className="bg-[#2e2e2e] border-[#3e3e3e]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#f5e6c7]">Delete Image</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#606161]">
+              Are you sure you want to delete this image?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-[#3e3e3e] text-[#f5e6c7] border-[#3e3e3e] hover:bg-[#4e4e4e]">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteImage && deleteMutation.mutate(deleteImage.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

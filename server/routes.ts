@@ -5,7 +5,8 @@ import {
   insertCategorySchema, 
   insertMenuItemSchema, 
   insertContactInfoSchema,
-  insertGalleryImageSchema
+  insertGalleryImageSchema,
+  insertPlaceImageSchema
 } from "@shared/schema";
 import crypto from "crypto";
 
@@ -252,6 +253,42 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete gallery image" });
+    }
+  });
+
+  app.get("/api/place-images", async (req, res) => {
+    try {
+      const images = await storage.getPlaceImages();
+      res.json(images.map(transformToCamelCase));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch place images" });
+    }
+  });
+
+  app.post("/api/place-images", async (req, res) => {
+    try {
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const parsed = insertPlaceImageSchema.safeParse(snakeCaseBody);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid place image data" });
+      }
+      const image = await storage.createPlaceImage(parsed.data);
+      res.status(201).json(transformToCamelCase(image));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create place image" });
+    }
+  });
+
+  app.delete("/api/place-images/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const deleted = await storage.deletePlaceImage(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Place image not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete place image" });
     }
   });
 

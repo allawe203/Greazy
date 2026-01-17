@@ -1,0 +1,71 @@
+Update Website with Following Changes
+1. Home Page - Add Uploaded Video
+
+Use the uploaded video file in the hero section
+Display it full screen with autoplay, loop, and muted
+Keep navigation bar on top
+
+2. Menu Page - Display Real Data from Supabase
+
+Fetch and display actual categories from Supabase categories table
+Fetch and display actual menu items from Supabase menu_items table
+Show category images, names from database
+Show menu item names, descriptions, prices, images from database
+
+3. Logo - Replace Text with Uploaded Logo
+
+Replace "GREAZY" text in navigation bar with the uploaded logo image
+Logo should be on the left side of navigation bar
+Make it clickable to return to home page
+
+4. Our Food → Our Place
+
+Change page name from "Our Food" to "Our Place"
+Change navigation link text
+Convert page to image slider only (no text, just images)
+Fetch images from Supabase table called place_images
+Create automatic sliding carousel with navigation arrows
+Full width images with smooth transitions
+
+5. Admin Dashboard - Upload Images from Computer
+For Categories:
+
+When adding category, allow file upload from computer instead of URL
+Upload image to Supabase Storage bucket images/categories
+Store the public URL in database
+
+For Menu Items:
+
+When adding menu item, allow file upload from computer instead of URL
+Upload image to Supabase Storage bucket images/menu-items
+Store the public URL in database
+
+For Our Place Images:
+
+Add new section in admin panel: "Manage Our Place"
+Allow uploading multiple images from computer
+Upload to Supabase Storage bucket images/our-place
+Store URLs in place_images table
+Enable delete functionality for each image
+
+6. Contact Information - Display from Database
+
+Fetch contact info from Supabase contact_info table
+Display phone, email, address, hours, WhatsApp, social media
+Update in real-time when admin saves changes in admin panel
+Make sure data appears correctly on Contact page after saving in admin dashboard
+
+Database Tables Needed
+sql-- Add this table for Our Place images
+CREATE TABLE place_images (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  image_url TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+Supabase Storage Buckets
+Create these storage buckets in Supabase:
+
+images (public bucket)
+
+All image uploads should use Supabase Storage, get public URL, then save URL to database.
+Make sure all features work properly with Supabase integration.

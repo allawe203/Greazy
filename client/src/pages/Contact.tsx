@@ -1,29 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase, type ContactInfo } from '@/lib/supabase';
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
 import { SiInstagram, SiFacebook, SiX } from 'react-icons/si';
 import { Card } from '@/components/ui/card';
+
+interface ContactInfo {
+  id: number;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  openingHours: string | null;
+  whatsapp: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  twitterUrl: string | null;
+}
 
 const defaultContact: ContactInfo = {
   id: 1,
   phone: '+966501234567',
   email: 'info@greazy.com',
   address: 'King Fahd Road, Riyadh, Saudi Arabia',
-  opening_hours: 'Daily 11:00 AM - 11:00 PM',
+  openingHours: 'Daily 11:00 AM - 11:00 PM',
   whatsapp: '+966501234567',
-  instagram_url: 'https://instagram.com/greazy',
-  facebook_url: 'https://facebook.com/greazy',
-  twitter_url: 'https://twitter.com/greazy',
+  instagramUrl: 'https://instagram.com/greazy',
+  facebookUrl: 'https://facebook.com/greazy',
+  twitterUrl: 'https://twitter.com/greazy',
 };
 
 export default function Contact() {
-  const { data: contactInfo } = useQuery({
+  const { data: contactInfo } = useQuery<ContactInfo>({
     queryKey: ['/api/contact'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('contact_info').select('*').single();
-      if (error || !data) return defaultContact;
-      return data as ContactInfo;
-    },
   });
 
   const contact = contactInfo || defaultContact;
@@ -32,37 +38,37 @@ export default function Contact() {
     {
       icon: Phone,
       label: 'Phone',
-      value: contact.phone,
-      href: `tel:${contact.phone}`,
+      value: contact.phone || '',
+      href: contact.phone ? `tel:${contact.phone}` : null,
       testId: 'contact-phone',
     },
     {
       icon: Mail,
       label: 'Email',
-      value: contact.email,
-      href: `mailto:${contact.email}`,
+      value: contact.email || '',
+      href: contact.email ? `mailto:${contact.email}` : null,
       testId: 'contact-email',
     },
     {
       icon: MessageCircle,
       label: 'WhatsApp',
-      value: contact.whatsapp,
-      href: `https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}`,
+      value: contact.whatsapp || '',
+      href: contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}` : null,
       testId: 'contact-whatsapp',
     },
     {
       icon: Clock,
       label: 'Opening Hours',
-      value: contact.opening_hours,
+      value: contact.openingHours || '',
       href: null,
       testId: 'contact-hours',
     },
   ];
 
   const socialLinks = [
-    { icon: SiInstagram, href: contact.instagram_url, label: 'Instagram', testId: 'social-instagram' },
-    { icon: SiFacebook, href: contact.facebook_url, label: 'Facebook', testId: 'social-facebook' },
-    { icon: SiX, href: contact.twitter_url, label: 'Twitter', testId: 'social-twitter' },
+    { icon: SiInstagram, href: contact.instagramUrl || '#', label: 'Instagram', testId: 'social-instagram' },
+    { icon: SiFacebook, href: contact.facebookUrl || '#', label: 'Facebook', testId: 'social-facebook' },
+    { icon: SiX, href: contact.twitterUrl || '#', label: 'Twitter', testId: 'social-twitter' },
   ];
 
   return (

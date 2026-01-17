@@ -6,6 +6,7 @@ A modern, fully functional restaurant website for "GREAZY" featuring a bold stre
 ## Brand Identity
 - **Restaurant Name**: GREAZY
 - **Tagline**: "We Stack, You Attack"
+- **Logo**: `attached_assets/V1_1768668285045.png`
 - **Color Palette**:
   - Primary Orange: #f36e27
   - Dark Background: #222222
@@ -18,93 +19,89 @@ A modern, fully functional restaurant website for "GREAZY" featuring a bold stre
 
 ### Frontend (React + TypeScript)
 - `/client/src/pages/` - Main page components
-  - `Home.tsx` - Video hero with branding
-  - `Menu.tsx` - Category grid and menu items
+  - `Home.tsx` - Full-screen video hero (uses local video file)
+  - `Menu.tsx` - Category grid and menu items from API
   - `Reservations.tsx` - Date picker with WhatsApp integration
-  - `OurFood.tsx` - Parallax image gallery
+  - `OurPlace.tsx` - Full-screen image slider with auto-play
   - `Contact.tsx` - Contact info with Google Maps
-  - `admin/Login.tsx` - Admin login
-  - `admin/Dashboard.tsx` - Full admin management
+  - `admin/Login.tsx` - Admin login (server-side validation)
+  - `admin/Dashboard.tsx` - Full admin management (Categories, Menu Items, Our Place, Contact)
 
 ### Backend (Express + TypeScript)
-- `/server/routes.ts` - API endpoints for categories, menu items, contact, gallery
+- `/server/routes.ts` - API endpoints with camelCase/snake_case transformation
 - `/server/storage.ts` - In-memory storage with CRUD operations
 - `/shared/schema.ts` - Shared TypeScript types and Zod schemas
 
-### Database Integration
-The app supports dual data sources:
-1. **Supabase** (Primary) - Direct client connection from frontend
-2. **Local API** (Fallback) - Express backend with in-memory storage
+### Data Flow
+- All data is fetched through the backend API (`/api/*` endpoints)
+- Backend transforms snake_case (database) to camelCase (frontend) and vice versa
+- In-memory storage is used by default; Supabase can be connected if needed
 
-**Supabase Credentials**:
-- URL: https://umyrutkzbunvqeumrqwi.supabase.co
-- Configured in `/client/src/lib/supabase.ts`
+### API Endpoints
+```
+GET/POST     /api/categories
+GET/PATCH/DELETE /api/categories/:id
 
-### Required Supabase Tables
-```sql
--- Categories
-CREATE TABLE categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+GET/POST     /api/menu-items
+GET/PATCH/DELETE /api/menu-items/:id
 
--- Menu Items
-CREATE TABLE menu_items (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  price DECIMAL(10, 2) NOT NULL,
-  image_url TEXT,
-  category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+GET/POST/PUT /api/contact
 
--- Contact Info
-CREATE TABLE contact_info (
-  id SERIAL PRIMARY KEY,
-  phone VARCHAR(50),
-  email VARCHAR(255),
-  address TEXT,
-  opening_hours TEXT,
-  whatsapp VARCHAR(50),
-  instagram_url TEXT,
-  facebook_url TEXT,
-  twitter_url TEXT
-);
+GET/POST     /api/place-images
+DELETE       /api/place-images/:id
 
--- Gallery Images
-CREATE TABLE gallery_images (
-  id SERIAL PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  title VARCHAR(255),
-  order_index INTEGER DEFAULT 0
-);
+POST         /api/admin/login
 ```
 
 ## Routes
 
 ### Public Pages
-- `/` - Home (video hero)
+- `/` - Home (full-screen video hero with custom uploaded video)
 - `/menu` - Menu categories and items
 - `/reservations` - Booking via WhatsApp
-- `/our-food` - Food gallery
+- `/our-place` - Image slider gallery (renamed from /our-food)
 - `/contact` - Contact information
 
 ### Admin Pages
 - `/admin` - Login page
-- `/admin/dashboard` - Management panel
+- `/admin/dashboard` - Management panel with tabs:
+  - Dashboard (overview)
+  - Categories
+  - Menu Items
+  - Our Place (image management)
+  - Contact Info
 
 **Admin Password**: `greazy@online_02365149875298`
 
 ## Key Features
 1. **Responsive Design** - Mobile-first with smooth transitions
-2. **Video Hero** - Full-screen looping video background
-3. **WhatsApp Integration** - Direct booking via WhatsApp
-4. **Admin Dashboard** - Category, menu item, and contact management
-5. **Parallax Gallery** - Scroll-triggered animations
-6. **Dark Theme** - Consistent dark aesthetic throughout
+2. **Video Hero** - Full-screen looping video background (custom uploaded video)
+3. **Logo Image** - Custom logo in navigation bar (clickable to home)
+4. **WhatsApp Integration** - Direct booking via WhatsApp
+5. **Admin Dashboard** - Category, menu item, place image, and contact management
+6. **Image Slider** - Auto-playing carousel for "Our Place" page
+7. **Dark Theme** - Consistent dark aesthetic throughout
+8. **Server-side Authentication** - Secure admin login
+
+## Image Upload (Supabase Storage)
+Admin dashboard supports file uploads to Supabase Storage for Categories, Menu Items, and Our Place images.
+
+### Setup Required
+1. Create a storage bucket named "images" in your Supabase dashboard
+2. Enable public access or configure RLS policies for the bucket
+3. The upload function will create folders: categories/, menu-items/, our-place/
+
+### Fallback
+If Supabase Storage is not configured, users can manually enter image URLs instead.
+
+## Recent Changes (January 2026)
+- Added file upload functionality to admin dashboard (Supabase Storage)
+- Added custom video file for home page hero
+- Added custom logo image in navigation bar
+- Renamed "Our Food" to "Our Place" with image slider
+- Added "Our Place" management tab in admin dashboard
+- Updated all pages to fetch data from backend API instead of Supabase directly
+- Added place_images table and API endpoints
 
 ## Development
 ```bash

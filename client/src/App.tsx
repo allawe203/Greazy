@@ -7,7 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import Home from "@/pages/Home";
 import Menu from "@/pages/Menu";
 import Reservations from "@/pages/Reservations";
-import OurFood from "@/pages/OurFood";
+import OurPlace from "@/pages/OurPlace";
 import Contact from "@/pages/Contact";
 import AdminLogin from "@/pages/admin/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -19,7 +19,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/menu" component={Menu} />
       <Route path="/reservations" component={Reservations} />
-      <Route path="/our-food" component={OurFood} />
+      <Route path="/our-place" component={OurPlace} />
       <Route path="/contact" component={Contact} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />

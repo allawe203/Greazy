@@ -78,3 +78,15 @@ export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
 
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type GalleryImage = typeof galleryImages.$inferSelect;
+
+export const placeImages = pgTable("place_images", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  image_url: text("image_url").notNull(),
+});
+
+export const insertPlaceImageSchema = createInsertSchema(placeImages).omit({
+  id: true,
+});
+
+export type InsertPlaceImage = z.infer<typeof insertPlaceImageSchema>;
+export type PlaceImage = typeof placeImages.$inferSelect;

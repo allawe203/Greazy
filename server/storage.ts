@@ -8,7 +8,9 @@ import {
   type ContactInfo,
   type InsertContactInfo,
   type GalleryImage,
-  type InsertGalleryImage 
+  type InsertGalleryImage,
+  type PlaceImage,
+  type InsertPlaceImage
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -35,6 +37,10 @@ export interface IStorage {
   getGalleryImages(): Promise<GalleryImage[]>;
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
   deleteGalleryImage(id: number): Promise<boolean>;
+  
+  getPlaceImages(): Promise<PlaceImage[]>;
+  createPlaceImage(image: InsertPlaceImage): Promise<PlaceImage>;
+  deletePlaceImage(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -43,6 +49,7 @@ export class MemStorage implements IStorage {
   private menuItems: Map<number, MenuItem>;
   private contactInfo: ContactInfo | undefined;
   private galleryImages: Map<number, GalleryImage>;
+  private placeImages: Map<string, PlaceImage>;
   private nextCategoryId: number = 1;
   private nextMenuItemId: number = 1;
   private nextGalleryImageId: number = 1;
@@ -52,6 +59,7 @@ export class MemStorage implements IStorage {
     this.categories = new Map();
     this.menuItems = new Map();
     this.galleryImages = new Map();
+    this.placeImages = new Map();
     this.initializeDefaults();
   }
 
@@ -96,7 +104,11 @@ export class MemStorage implements IStorage {
 
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = this.nextCategoryId++;
-    const newCategory: Category = { ...category, id };
+    const newCategory: Category = { 
+      id, 
+      name: category.name,
+      image_url: category.image_url ?? null,
+    };
     this.categories.set(id, newCategory);
     return newCategory;
   }
@@ -104,7 +116,11 @@ export class MemStorage implements IStorage {
   async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
     const existing = this.categories.get(id);
     if (!existing) return undefined;
-    const updated: Category = { ...existing, ...category };
+    const updated: Category = { 
+      ...existing, 
+      name: category.name ?? existing.name,
+      image_url: category.image_url !== undefined ? category.image_url : existing.image_url,
+    };
     this.categories.set(id, updated);
     return updated;
   }
@@ -129,7 +145,14 @@ export class MemStorage implements IStorage {
 
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
     const id = this.nextMenuItemId++;
-    const newItem: MenuItem = { ...item, id };
+    const newItem: MenuItem = { 
+      id, 
+      name: item.name,
+      description: item.description ?? null,
+      price: item.price,
+      image_url: item.image_url ?? null,
+      category_id: item.category_id ?? null,
+    };
     this.menuItems.set(id, newItem);
     return newItem;
   }
@@ -137,7 +160,14 @@ export class MemStorage implements IStorage {
   async updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
     const existing = this.menuItems.get(id);
     if (!existing) return undefined;
-    const updated: MenuItem = { ...existing, ...item };
+    const updated: MenuItem = { 
+      ...existing, 
+      name: item.name ?? existing.name,
+      description: item.description !== undefined ? item.description : existing.description,
+      price: item.price ?? existing.price,
+      image_url: item.image_url !== undefined ? item.image_url : existing.image_url,
+      category_id: item.category_id !== undefined ? item.category_id : existing.category_id,
+    };
     this.menuItems.set(id, updated);
     return updated;
   }
@@ -151,7 +181,17 @@ export class MemStorage implements IStorage {
   }
 
   async updateContactInfo(info: InsertContactInfo): Promise<ContactInfo> {
-    this.contactInfo = { ...info, id: 1 };
+    this.contactInfo = { 
+      id: 1,
+      phone: info.phone ?? null,
+      email: info.email ?? null,
+      address: info.address ?? null,
+      opening_hours: info.opening_hours ?? null,
+      whatsapp: info.whatsapp ?? null,
+      instagram_url: info.instagram_url ?? null,
+      facebook_url: info.facebook_url ?? null,
+      twitter_url: info.twitter_url ?? null,
+    };
     return this.contactInfo;
   }
 
@@ -161,13 +201,33 @@ export class MemStorage implements IStorage {
 
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
     const id = this.nextGalleryImageId++;
-    const newImage: GalleryImage = { ...image, id };
+    const newImage: GalleryImage = { 
+      id, 
+      image_url: image.image_url,
+      title: image.title ?? null,
+      order_index: image.order_index ?? null,
+    };
     this.galleryImages.set(id, newImage);
     return newImage;
   }
 
   async deleteGalleryImage(id: number): Promise<boolean> {
     return this.galleryImages.delete(id);
+  }
+
+  async getPlaceImages(): Promise<PlaceImage[]> {
+    return Array.from(this.placeImages.values());
+  }
+
+  async createPlaceImage(image: InsertPlaceImage): Promise<PlaceImage> {
+    const id = randomUUID();
+    const newImage: PlaceImage = { ...image, id };
+    this.placeImages.set(id, newImage);
+    return newImage;
+  }
+
+  async deletePlaceImage(id: string): Promise<boolean> {
+    return this.placeImages.delete(id);
   }
 }
 
