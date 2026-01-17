@@ -1,0 +1,279 @@
+Important: If any SQL queries need to be executed to set up tables, display them clearly in the interface so the user can run them manually in Supabase.
+Page 1: Home
+
+Full-screen looping video background (use placeholder video URL)
+Semi-transparent dark overlay with GREAZY logo centered
+Subtle scroll indicator at bottom
+Smooth fade-in animation on page load
+Logo uses brand colors (#f36e27 primary, #f5e6c7 secondary)
+
+Page 2: Menu
+Initial View:
+
+Grid of category cards (3 columns on desktop, 2 on tablet, 1 on mobile)
+Each card displays:
+
+Category image (fetched from Supabase)
+Category name
+Hover effect: scale up, orange border glow (#f36e27)
+Smooth transition animations
+
+
+
+Category Detail View:
+
+Display all menu items for selected category
+Each item card shows:
+
+Food image
+Item name (bold, large)
+Description (cream color #f5e6c7)
+Price (orange #f36e27, prominent)
+
+
+"Back to Categories" button with arrow icon
+Grid layout with smooth fade-in stagger animation
+
+Page 3: Reservations
+Layout:
+
+Modern, clean form design
+Date picker showing remaining days of current month
+
+Disabled dates for past days
+Orange highlight (#f36e27) for selected date
+Dark theme matching brand colors
+
+
+Message textarea for customer notes (placeholder: "Number of guests, special requests, etc.")
+Large "Book Now" button (orange #f36e27, white text)
+Form validation before WhatsApp redirect
+
+WhatsApp Integration:
+
+Opens WhatsApp with pre-filled message:
+
+  Hello GREAZY Restaurant,
+  I would like to make a reservation for [SELECTED DATE]
+  
+  [USER MESSAGE]
+
+WhatsApp number: Use contact info from Supabase (default placeholder: +966501234567)
+Opens in new tab/window
+
+Page 4: Our Food
+
+Vertical scrolling gallery with stunning visuals
+High-quality food images (fetch from Supabase or use placeholder images)
+Scroll-triggered animations:
+
+Fade and slide-in from sides
+Parallax effect (images move at different speeds)
+Scale on scroll into view
+Staggered animation timing
+
+
+Images alternate left/right layout
+Dark background (#222222) with cream text overlays (#f5e6c7)
+Lazy loading for performance optimization
+
+Page 5: Contact
+Information Display:
+
+Phone number (with click-to-call icon)
+Email address (with mailto link)
+Physical address
+Opening hours
+WhatsApp number (with direct link)
+Social media icons (Instagram, Facebook, Twitter)
+
+Icons in orange (#f36e27) with hover effects
+
+
+
+Additional Elements:
+
+Embedded Google Maps (use placeholder coordinates for Riyadh)
+All text in cream/light cream colors (#f5e6c7, #f9f3e1)
+Dark background (#222222, #3e3e3e)
+Contact cards with subtle hover animations
+
+Admin Dashboard
+Access:
+
+Protected route: /admin
+Password: greazy@online_02365149875298
+Simple login screen with GREAZY branding
+Session management (remember login for 24 hours)
+
+Admin Layout:
+
+Sidebar navigation:
+
+Dashboard Overview
+Manage Categories
+Manage Menu Items
+Contact Information
+Logout
+
+
+Dark theme matching main site
+Orange accents for active states
+
+Categories Management:
+
+Table view with columns: Image Preview, Name, Actions
+Add Category:
+
+Name input
+Image upload (convert to URL and store in Supabase)
+Save button
+
+
+Edit Category:
+
+Modal/drawer with form
+Pre-filled with existing data
+Update button
+
+
+Delete Category:
+
+Confirmation dialog
+Warning if category has menu items
+
+
+Real-time data fetching from Supabase
+
+Menu Items Management:
+
+Table view with columns: Image, Name, Category, Price, Actions
+Add Menu Item:
+
+Name input
+Description textarea
+Price input (number)
+Category dropdown (fetch from Supabase)
+Image upload
+Save button
+
+
+Edit Menu Item:
+
+Modal/drawer with pre-filled form
+All fields editable
+Update button
+
+
+Delete Menu Item:
+
+Confirmation dialog
+Delete from Supabase
+
+
+Filter by category
+Search functionality
+
+Contact Information Management:
+
+Form with all contact fields:
+
+Phone
+Email
+Address
+Opening hours
+WhatsApp
+Instagram URL
+Facebook URL
+Twitter URL
+
+
+Single record in Supabase (update, not insert)
+Save button with success notification
+
+Dashboard Features:
+
+Success/error notifications (toasts)
+Loading states for all operations
+Form validation
+Responsive design
+Image preview before upload
+Confirmation dialogs for destructive actions
+
+Technical Implementation
+Supabase Integration:
+
+Install @supabase/supabase-js
+Initialize client with provided credentials
+Use Supabase Storage for image uploads (bucket: 'images')
+Real-time subscriptions for data updates (optional enhancement)
+Error handling for all database operations
+
+Image Upload Flow:
+
+User selects image file
+Upload to Supabase Storage
+Get public URL
+Store URL in database table
+Display image using public URL
+
+If SQL Setup Needed:
+Display a clear message in admin panel:
+"Please run the following SQL in your Supabase SQL Editor to set up the database:"
+[Show SQL CREATE TABLE statements]
+"After running these queries, refresh this page."
+Frontend Technology:
+
+React with Hooks (useState, useEffect, useContext)
+React Router for page navigation
+Tailwind CSS for styling (use only core utility classes)
+Lucide React for icons
+Date picker component (React Date Picker or similar)
+Form handling with validation
+Responsive design (mobile-first approach)
+
+Design System:
+
+Typography: Bold, modern sans-serif fonts
+Spacing: Consistent padding/margins
+Animations: Smooth, 300-400ms transitions
+Buttons: Large, clear CTAs with hover states
+Forms: Clean inputs with clear labels and validation states
+Loading states: Spinners with brand colors
+Error states: Clear, helpful error messages
+
+Performance:
+
+Lazy load images
+Code splitting for routes
+Optimize image sizes
+Minimize API calls
+Cache Supabase data when appropriate
+
+Additional Features:
+
+Smooth scroll navigation
+Active page indicator in navbar
+Mobile-optimized touch interactions
+Loading skeletons for better UX
+Toast notifications for user actions
+404 page for invalid routes
+Accessibility features (alt texts, ARIA labels, keyboard navigation)
+
+Design Aesthetic
+
+Style: Modern, bold, edgy street food vibe
+Mood: Energetic, urban, appetizing
+Color Usage:
+
+Orange (#f36e27) for CTAs, highlights, accents
+Dark (#222222, #3e3e3e) for backgrounds
+Cream/Light (#f5e6c7, #f9f3e1) for text and secondary elements
+Gray (#606161) for subtle elements
+
+
+Animations: Smooth, engaging, not overdone
+Typography: Bold headlines, readable body text
+Imagery: High-quality, appetizing food photos
+
+Build this as a complete, production-ready single-page application. Every feature must be fully functional from the start. No placeholders for functionality - everything should work perfectly with Supabase integration.
