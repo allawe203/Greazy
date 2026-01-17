@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase, type Category, type MenuItem, type ContactInfo } from '@/lib/supabase';
 import { queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +17,6 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  X,
-  AlertTriangle,
   Save,
   ImageIcon,
 } from 'lucide-react';
@@ -47,6 +44,33 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface Category {
+  id: number;
+  name: string;
+  imageUrl: string;
+}
+
+interface MenuItem {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  categoryId: number;
+}
+
+interface ContactInfo {
+  id: number;
+  phone: string;
+  email: string;
+  address: string;
+  openingHours: string;
+  whatsapp: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  twitterUrl: string;
+}
+
 type AdminTab = 'overview' | 'categories' | 'menu-items' | 'contact';
 
 const defaultContact: ContactInfo = {
@@ -54,12 +78,30 @@ const defaultContact: ContactInfo = {
   phone: '+966501234567',
   email: 'info@greazy.com',
   address: 'King Fahd Road, Riyadh, Saudi Arabia',
-  opening_hours: 'Daily 11:00 AM - 11:00 PM',
+  openingHours: 'Daily 11:00 AM - 11:00 PM',
   whatsapp: '+966501234567',
-  instagram_url: 'https://instagram.com/greazy',
-  facebook_url: 'https://facebook.com/greazy',
-  twitter_url: 'https://twitter.com/greazy',
+  instagramUrl: 'https://instagram.com/greazy',
+  facebookUrl: 'https://facebook.com/greazy',
+  twitterUrl: 'https://twitter.com/greazy',
 };
+
+async function apiFetch(url: string, options?: RequestInit) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => 'Unknown error');
+    throw new Error(`API error: ${res.status} - ${errorText}`);
+  }
+  if (res.status === 204) {
+    return null;
+  }
+  return res.json();
+}
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -148,19 +190,11 @@ export default function AdminDashboard() {
 
 function OverviewTab() {
   const { data: categories } = useQuery({
-    queryKey: ['/admin/categories'],
-    queryFn: async () => {
-      const { data } = await supabase.from('categories').select('*');
-      return data || [];
-    },
+    queryKey: ['/api/categories'],
   });
 
   const { data: menuItems } = useQuery({
-    queryKey: ['/admin/menu-items'],
-    queryFn: async () => {
-      const { data } = await supabase.from('menu_items').select('*');
-      return data || [];
-    },
+    queryKey: ['/api/menu-items'],
   });
 
   return (
@@ -175,7 +209,7 @@ function OverviewTab() {
             </div>
             <div>
               <p className="text-sm text-[#606161]">Categories</p>
-              <p className="text-3xl font-bold text-[#f5e6c7]">{categories?.length || 0}</p>
+              <p className="text-3xl font-bold text-[#f5e6c7]">{(categories as Category[])?.length || 0}</p>
             </div>
           </div>
         </Card>
@@ -187,7 +221,7 @@ function OverviewTab() {
             </div>
             <div>
               <p className="text-sm text-[#606161]">Menu Items</p>
-              <p className="text-3xl font-bold text-[#f5e6c7]">{menuItems?.length || 0}</p>
+              <p className="text-3xl font-bold text-[#f5e6c7]">{(menuItems as MenuItem[])?.length || 0}</p>
             </div>
           </div>
         </Card>
@@ -208,56 +242,10 @@ function OverviewTab() {
       </div>
 
       <Card className="p-6 bg-[#2e2e2e] border-[#3e3e3e]">
-        <h2 className="text-xl font-bold text-[#f5e6c7] mb-4">Database Setup</h2>
-        <p className="text-[#f5e6c7]/80 mb-4">
-          If you haven't set up the database tables yet, please run the following SQL in your Supabase SQL Editor:
+        <h2 className="text-xl font-bold text-[#f5e6c7] mb-4">Quick Start</h2>
+        <p className="text-[#f5e6c7]/80">
+          Use the sidebar to manage your restaurant content. Add categories, menu items, and update contact information.
         </p>
-        <pre className="bg-[#1a1a1a] p-4 rounded-lg overflow-x-auto text-sm text-[#f5e6c7]/80 border border-[#3e3e3e]">
-{`-- Categories table
-CREATE TABLE IF NOT EXISTS categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Menu items table
-CREATE TABLE IF NOT EXISTS menu_items (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  price DECIMAL(10, 2) NOT NULL,
-  image_url TEXT,
-  category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Contact info table
-CREATE TABLE IF NOT EXISTS contact_info (
-  id SERIAL PRIMARY KEY,
-  phone VARCHAR(50),
-  email VARCHAR(255),
-  address TEXT,
-  opening_hours TEXT,
-  whatsapp VARCHAR(50),
-  instagram_url TEXT,
-  facebook_url TEXT,
-  twitter_url TEXT
-);
-
--- Gallery images table
-CREATE TABLE IF NOT EXISTS gallery_images (
-  id SERIAL PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  title VARCHAR(255),
-  order_index INTEGER DEFAULT 0
-);
-
--- Insert default contact info
-INSERT INTO contact_info (phone, email, address, opening_hours, whatsapp, instagram_url, facebook_url, twitter_url)
-VALUES ('+966501234567', 'info@greazy.com', 'King Fahd Road, Riyadh, Saudi Arabia', 'Daily 11:00 AM - 11:00 PM', '+966501234567', 'https://instagram.com/greazy', 'https://facebook.com/greazy', 'https://twitter.com/greazy')
-ON CONFLICT DO NOTHING;`}
-        </pre>
       </Card>
     </div>
   );
@@ -267,33 +255,31 @@ function CategoriesTab({ toast }: { toast: any }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: '', image_url: '' });
+  const [formData, setFormData] = useState({ name: '', imageUrl: '' });
 
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ['/admin/categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('categories').select('*').order('id');
-      if (error) throw error;
-      return data as Category[];
-    },
+  const { data: categories, isLoading } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { name: string; image_url: string; id?: number }) => {
+    mutationFn: async (data: { name: string; imageUrl: string; id?: number }) => {
       if (data.id) {
-        const { error } = await supabase.from('categories').update({ name: data.name, image_url: data.image_url }).eq('id', data.id);
-        if (error) throw error;
+        return apiFetch(`/api/categories/${data.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ name: data.name, imageUrl: data.imageUrl }),
+        });
       } else {
-        const { error } = await supabase.from('categories').insert({ name: data.name, image_url: data.image_url });
-        if (error) throw error;
+        return apiFetch('/api/categories', {
+          method: 'POST',
+          body: JSON.stringify({ name: data.name, imageUrl: data.imageUrl }),
+        });
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/admin/categories'] });
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       setIsDialogOpen(false);
       setEditingCategory(null);
-      setFormData({ name: '', image_url: '' });
+      setFormData({ name: '', imageUrl: '' });
       toast({ title: 'Success', description: 'Category saved successfully' });
     },
     onError: () => {
@@ -303,11 +289,9 @@ function CategoriesTab({ toast }: { toast: any }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('categories').delete().eq('id', id);
-      if (error) throw error;
+      return apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/admin/categories'] });
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       setDeleteCategory(null);
       toast({ title: 'Success', description: 'Category deleted' });
@@ -319,13 +303,13 @@ function CategoriesTab({ toast }: { toast: any }) {
 
   const openAddDialog = () => {
     setEditingCategory(null);
-    setFormData({ name: '', image_url: '' });
+    setFormData({ name: '', imageUrl: '' });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (category: Category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, image_url: category.image_url });
+    setFormData({ name: category.name, imageUrl: category.imageUrl });
     setIsDialogOpen(true);
   };
 
@@ -361,8 +345,8 @@ function CategoriesTab({ toast }: { toast: any }) {
               {categories?.map((category) => (
                 <tr key={category.id} className="border-b border-[#3e3e3e] last:border-0" data-testid={`category-row-${category.id}`}>
                   <td className="p-4">
-                    {category.image_url ? (
-                      <img src={category.image_url} alt={category.name} className="w-16 h-12 object-cover rounded" />
+                    {category.imageUrl ? (
+                      <img src={category.imageUrl} alt={category.name} className="w-16 h-12 object-cover rounded" />
                     ) : (
                       <div className="w-16 h-12 bg-[#3e3e3e] rounded flex items-center justify-center">
                         <ImageIcon className="w-6 h-6 text-[#606161]" />
@@ -402,10 +386,10 @@ function CategoriesTab({ toast }: { toast: any }) {
             </div>
             <div>
               <label className="block text-sm text-[#606161] mb-2">Image URL</label>
-              <Input value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
             </div>
-            {formData.image_url && (
-              <img src={formData.image_url} alt="Preview" className="w-full h-32 object-cover rounded" />
+            {formData.imageUrl && (
+              <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded" />
             )}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-[#f5e6c7]">Cancel</Button>
@@ -442,40 +426,42 @@ function MenuItemsTab({ toast }: { toast: any }) {
   const [deleteItem, setDeleteItem] = useState<MenuItem | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ name: '', description: '', price: '', image_url: '', category_id: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', price: '', imageUrl: '', categoryId: '' });
 
-  const { data: categories } = useQuery({
-    queryKey: ['/admin/categories'],
-    queryFn: async () => {
-      const { data } = await supabase.from('categories').select('*').order('id');
-      return data as Category[];
-    },
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
   });
 
-  const { data: menuItems, isLoading } = useQuery({
-    queryKey: ['/admin/menu-items'],
-    queryFn: async () => {
-      const { data } = await supabase.from('menu_items').select('*').order('id');
-      return data as MenuItem[];
-    },
+  const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
+    queryKey: ['/api/menu-items'],
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
+      const payload = {
+        name: data.name,
+        description: data.description,
+        price: parseFloat(data.price),
+        imageUrl: data.imageUrl,
+        categoryId: parseInt(data.categoryId),
+      };
       if (data.id) {
-        const { error } = await supabase.from('menu_items').update({ name: data.name, description: data.description, price: parseFloat(data.price), image_url: data.image_url, category_id: parseInt(data.category_id) }).eq('id', data.id);
-        if (error) throw error;
+        return apiFetch(`/api/menu-items/${data.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
       } else {
-        const { error } = await supabase.from('menu_items').insert({ name: data.name, description: data.description, price: parseFloat(data.price), image_url: data.image_url, category_id: parseInt(data.category_id) });
-        if (error) throw error;
+        return apiFetch('/api/menu-items', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/admin/menu-items'] });
       queryClient.invalidateQueries({ queryKey: ['/api/menu-items'] });
       setIsDialogOpen(false);
       setEditingItem(null);
-      setFormData({ name: '', description: '', price: '', image_url: '', category_id: '' });
+      setFormData({ name: '', description: '', price: '', imageUrl: '', categoryId: '' });
       toast({ title: 'Success', description: 'Menu item saved successfully' });
     },
     onError: () => {
@@ -485,11 +471,10 @@ function MenuItemsTab({ toast }: { toast: any }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('menu_items').delete().eq('id', id);
-      if (error) throw error;
+      return apiFetch(`/api/menu-items/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/admin/menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/menu-items'] });
       setDeleteItem(null);
       toast({ title: 'Success', description: 'Menu item deleted' });
     },
@@ -497,13 +482,13 @@ function MenuItemsTab({ toast }: { toast: any }) {
 
   const openAddDialog = () => {
     setEditingItem(null);
-    setFormData({ name: '', description: '', price: '', image_url: '', category_id: categories?.[0]?.id.toString() || '' });
+    setFormData({ name: '', description: '', price: '', imageUrl: '', categoryId: categories?.[0]?.id.toString() || '' });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (item: MenuItem) => {
     setEditingItem(item);
-    setFormData({ name: item.name, description: item.description, price: item.price.toString(), image_url: item.image_url, category_id: item.category_id.toString() });
+    setFormData({ name: item.name, description: item.description, price: item.price.toString(), imageUrl: item.imageUrl, categoryId: item.categoryId.toString() });
     setIsDialogOpen(true);
   };
 
@@ -513,7 +498,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
   };
 
   const filteredItems = menuItems?.filter((item) => {
-    const matchesCategory = filterCategory === 'all' || item.category_id.toString() === filterCategory;
+    const matchesCategory = filterCategory === 'all' || item.categoryId.toString() === filterCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -564,8 +549,8 @@ function MenuItemsTab({ toast }: { toast: any }) {
               {filteredItems?.map((item) => (
                 <tr key={item.id} className="border-b border-[#3e3e3e] last:border-0">
                   <td className="p-4">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-16 h-12 object-cover rounded" />
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name} className="w-16 h-12 object-cover rounded" />
                     ) : (
                       <div className="w-16 h-12 bg-[#3e3e3e] rounded flex items-center justify-center">
                         <ImageIcon className="w-6 h-6 text-[#606161]" />
@@ -573,7 +558,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
                     )}
                   </td>
                   <td className="p-4 text-[#f5e6c7] font-medium">{item.name}</td>
-                  <td className="p-4 text-[#606161]">{getCategoryName(item.category_id)}</td>
+                  <td className="p-4 text-[#606161]">{getCategoryName(item.categoryId)}</td>
                   <td className="p-4 text-[#f36e27] font-bold">SAR {item.price}</td>
                   <td className="p-4 text-right">
                     <Button size="icon" variant="ghost" onClick={() => openEditDialog(item)} className="text-[#f5e6c7] hover:text-[#f36e27]">
@@ -587,7 +572,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
               ))}
               {(!filteredItems || filteredItems.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-[#606161]">No menu items found.</td>
+                  <td colSpan={5} className="p-8 text-center text-[#606161]">No menu items yet. Add your first item!</td>
                 </tr>
               )}
             </tbody>
@@ -596,7 +581,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[#2e2e2e] border-[#3e3e3e] max-w-lg">
+        <DialogContent className="bg-[#2e2e2e] border-[#3e3e3e]">
           <DialogHeader>
             <DialogTitle className="text-[#f5e6c7]">{editingItem ? 'Edit Menu Item' : 'Add Menu Item'}</DialogTitle>
           </DialogHeader>
@@ -616,7 +601,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
               </div>
               <div>
                 <label className="block text-sm text-[#606161] mb-2">Category</label>
-                <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
+                <Select value={formData.categoryId} onValueChange={(val) => setFormData({ ...formData, categoryId: val })}>
                   <SelectTrigger className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -630,10 +615,10 @@ function MenuItemsTab({ toast }: { toast: any }) {
             </div>
             <div>
               <label className="block text-sm text-[#606161] mb-2">Image URL</label>
-              <Input value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
             </div>
-            {formData.image_url && (
-              <img src={formData.image_url} alt="Preview" className="w-full h-32 object-cover rounded" />
+            {formData.imageUrl && (
+              <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded" />
             )}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-[#f5e6c7]">Cancel</Button>
@@ -667,28 +652,24 @@ function MenuItemsTab({ toast }: { toast: any }) {
 function ContactTab({ toast }: { toast: any }) {
   const [formData, setFormData] = useState<ContactInfo>(defaultContact);
 
-  const { data: contactInfo, isLoading } = useQuery({
-    queryKey: ['/admin/contact'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('contact_info').select('*').single();
-      if (error || !data) return defaultContact;
-      return data as ContactInfo;
-    },
+  const { data: contactData, isLoading } = useQuery<ContactInfo>({
+    queryKey: ['/api/contact'],
   });
 
   useEffect(() => {
-    if (contactInfo) {
-      setFormData(contactInfo);
+    if (contactData) {
+      setFormData(contactData);
     }
-  }, [contactInfo]);
+  }, [contactData]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: ContactInfo) => {
-      const { error } = await supabase.from('contact_info').upsert({ ...data, id: 1 });
-      if (error) throw error;
+      return apiFetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/admin/contact'] });
       queryClient.invalidateQueries({ queryKey: ['/api/contact'] });
       toast({ title: 'Success', description: 'Contact info saved successfully' });
     },
@@ -714,61 +695,66 @@ function ContactTab({ toast }: { toast: any }) {
     <div>
       <h1 className="text-3xl font-bold text-[#f5e6c7] mb-8">Contact Information</h1>
 
-      <Card className="p-6 bg-[#2e2e2e] border-[#3e3e3e]">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm text-[#606161] mb-2">Phone</label>
-              <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+966501234567" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+      <form onSubmit={handleSubmit}>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="p-6 bg-[#2e2e2e] border-[#3e3e3e]">
+            <h2 className="text-lg font-bold text-[#f5e6c7] mb-4">Basic Info</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Phone</label>
+                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Email</label>
+                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">WhatsApp</label>
+                <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-[#606161] mb-2">Email</label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="info@greazy.com" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
-            </div>
-          </div>
+          </Card>
 
-          <div>
-            <label className="block text-sm text-[#606161] mb-2">Address</label>
-            <Textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Restaurant address" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm text-[#606161] mb-2">Opening Hours</label>
-              <Input value={formData.opening_hours} onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })} placeholder="Daily 11:00 AM - 11:00 PM" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+          <Card className="p-6 bg-[#2e2e2e] border-[#3e3e3e]">
+            <h2 className="text-lg font-bold text-[#f5e6c7] mb-4">Location</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Address</label>
+                <Textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Opening Hours</label>
+                <Input value={formData.openingHours} onChange={(e) => setFormData({ ...formData, openingHours: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-[#606161] mb-2">WhatsApp Number</label>
-              <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+966501234567" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
-            </div>
-          </div>
+          </Card>
 
-          <div className="border-t border-[#3e3e3e] pt-6">
-            <h3 className="text-lg font-semibold text-[#f5e6c7] mb-4">Social Media</h3>
-            <div className="grid md:grid-cols-3 gap-6">
+          <Card className="p-6 bg-[#2e2e2e] border-[#3e3e3e] md:col-span-2">
+            <h2 className="text-lg font-bold text-[#f5e6c7] mb-4">Social Media</h2>
+            <div className="grid md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm text-[#606161] mb-2">Instagram URL</label>
-                <Input value={formData.instagram_url} onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })} placeholder="https://instagram.com/greazy" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+                <Input value={formData.instagramUrl} onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
               <div>
                 <label className="block text-sm text-[#606161] mb-2">Facebook URL</label>
-                <Input value={formData.facebook_url} onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })} placeholder="https://facebook.com/greazy" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+                <Input value={formData.facebookUrl} onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
               <div>
                 <label className="block text-sm text-[#606161] mb-2">Twitter URL</label>
-                <Input value={formData.twitter_url} onChange={(e) => setFormData({ ...formData, twitter_url: e.target.value })} placeholder="https://twitter.com/greazy" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+                <Input value={formData.twitterUrl} onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
             </div>
-          </div>
+          </Card>
+        </div>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saveMutation.isPending} className="bg-[#f36e27] hover:bg-[#e05d1a]">
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Changes
-            </Button>
-          </div>
-        </form>
-      </Card>
+        <div className="mt-6 flex justify-end">
+          <Button type="submit" disabled={saveMutation.isPending} className="bg-[#f36e27] hover:bg-[#e05d1a]">
+            {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            Save Changes
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

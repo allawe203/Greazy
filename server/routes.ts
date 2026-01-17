@@ -11,6 +11,27 @@ import crypto from "crypto";
 
 const EXPECTED_PASSWORD = 'greazy@online_02365149875298';
 
+function transformToSnakeCase(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result: any = {};
+  for (const key in obj) {
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    result[snakeKey] = obj[key];
+  }
+  return result;
+}
+
+function transformToCamelCase(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(transformToCamelCase);
+  const result: any = {};
+  for (const key in obj) {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    result[camelKey] = obj[key];
+  }
+  return result;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -38,7 +59,7 @@ export async function registerRoutes(
   app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getCategories();
-      res.json(categories);
+      res.json(categories.map(transformToCamelCase));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch categories" });
     }
@@ -51,7 +72,7 @@ export async function registerRoutes(
       if (!category) {
         return res.status(404).json({ error: "Category not found" });
       }
-      res.json(category);
+      res.json(transformToCamelCase(category));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch category" });
     }
@@ -59,12 +80,13 @@ export async function registerRoutes(
 
   app.post("/api/categories", async (req, res) => {
     try {
-      const parsed = insertCategorySchema.safeParse(req.body);
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const parsed = insertCategorySchema.safeParse(snakeCaseBody);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid category data" });
       }
       const category = await storage.createCategory(parsed.data);
-      res.status(201).json(category);
+      res.status(201).json(transformToCamelCase(category));
     } catch (error) {
       res.status(500).json({ error: "Failed to create category" });
     }
@@ -73,11 +95,12 @@ export async function registerRoutes(
   app.patch("/api/categories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const category = await storage.updateCategory(id, req.body);
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const category = await storage.updateCategory(id, snakeCaseBody);
       if (!category) {
         return res.status(404).json({ error: "Category not found" });
       }
-      res.json(category);
+      res.json(transformToCamelCase(category));
     } catch (error) {
       res.status(500).json({ error: "Failed to update category" });
     }
@@ -100,7 +123,7 @@ export async function registerRoutes(
     try {
       const categoryId = req.query.category_id ? parseInt(req.query.category_id as string) : undefined;
       const items = await storage.getMenuItems(categoryId);
-      res.json(items);
+      res.json(items.map(transformToCamelCase));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch menu items" });
     }
@@ -113,7 +136,7 @@ export async function registerRoutes(
       if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
-      res.json(item);
+      res.json(transformToCamelCase(item));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch menu item" });
     }
@@ -121,12 +144,13 @@ export async function registerRoutes(
 
   app.post("/api/menu-items", async (req, res) => {
     try {
-      const parsed = insertMenuItemSchema.safeParse(req.body);
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const parsed = insertMenuItemSchema.safeParse(snakeCaseBody);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid menu item data" });
       }
       const item = await storage.createMenuItem(parsed.data);
-      res.status(201).json(item);
+      res.status(201).json(transformToCamelCase(item));
     } catch (error) {
       res.status(500).json({ error: "Failed to create menu item" });
     }
@@ -135,11 +159,12 @@ export async function registerRoutes(
   app.patch("/api/menu-items/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const item = await storage.updateMenuItem(id, req.body);
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const item = await storage.updateMenuItem(id, snakeCaseBody);
       if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
-      res.json(item);
+      res.json(transformToCamelCase(item));
     } catch (error) {
       res.status(500).json({ error: "Failed to update menu item" });
     }
@@ -161,20 +186,35 @@ export async function registerRoutes(
   app.get("/api/contact", async (req, res) => {
     try {
       const info = await storage.getContactInfo();
-      res.json(info || null);
+      res.json(info ? transformToCamelCase(info) : null);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch contact info" });
     }
   });
 
-  app.put("/api/contact", async (req, res) => {
+  app.post("/api/contact", async (req, res) => {
     try {
-      const parsed = insertContactInfoSchema.safeParse(req.body);
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const parsed = insertContactInfoSchema.safeParse(snakeCaseBody);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid contact info data" });
       }
       const info = await storage.updateContactInfo(parsed.data);
-      res.json(info);
+      res.json(transformToCamelCase(info));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update contact info" });
+    }
+  });
+
+  app.put("/api/contact", async (req, res) => {
+    try {
+      const snakeCaseBody = transformToSnakeCase(req.body);
+      const parsed = insertContactInfoSchema.safeParse(snakeCaseBody);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid contact info data" });
+      }
+      const info = await storage.updateContactInfo(parsed.data);
+      res.json(transformToCamelCase(info));
     } catch (error) {
       res.status(500).json({ error: "Failed to update contact info" });
     }
