@@ -88,11 +88,17 @@ Admin dashboard supports file uploads to Supabase Storage for Categories, Menu I
 
 ### Setup Required
 1. Create a storage bucket named "images" in your Supabase dashboard
-2. Enable public access or configure RLS policies for the bucket
-3. The upload function will create folders: categories/, menu-items/, our-place/
+2. Enable public access for the bucket
+3. Add `SUPABASE_SERVICE_ROLE_KEY` to environment secrets (from Supabase Dashboard → Settings → API → service_role key)
+
+### How It Works
+- File uploads are handled through the backend API (`POST /api/upload`)
+- Backend uses the service role key to upload to Supabase Storage
+- Files are organized in folders: categories/, menu-items/, our-place/
+- Public URLs are returned and saved with records
 
 ### Fallback
-If Supabase Storage is not configured, users can manually enter image URLs instead.
+If file upload fails or Supabase Storage is not configured, users can manually enter image URLs instead.
 
 ## Recent Changes (January 2026)
 - Added file upload functionality to admin dashboard (Supabase Storage)
