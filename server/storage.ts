@@ -12,6 +12,7 @@ import {
   type PlaceImage,
   type InsertPlaceImage
 } from "@shared/schema";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -43,192 +44,296 @@ export interface IStorage {
   deletePlaceImage(id: string): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private categories: Map<number, Category>;
-  private menuItems: Map<number, MenuItem>;
-  private contactInfo: ContactInfo | undefined;
-  private galleryImages: Map<number, GalleryImage>;
-  private placeImages: Map<string, PlaceImage>;
-  private nextCategoryId: number = 1;
-  private nextMenuItemId: number = 1;
-  private nextGalleryImageId: number = 1;
+const supabaseUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+export class SupabaseStorage implements IStorage {
+  private supabase: SupabaseClient;
 
   constructor() {
-    this.users = new Map();
-    this.categories = new Map();
-    this.menuItems = new Map();
-    this.galleryImages = new Map();
-    this.placeImages = new Map();
-    this.initializeDefaults();
-  }
-
-  private initializeDefaults() {
-    this.contactInfo = {
-      id: 1,
-      phone: '+966501234567',
-      email: 'info@greazy.com',
-      address: 'King Fahd Road, Riyadh, Saudi Arabia',
-      opening_hours: 'Daily 11:00 AM - 11:00 PM',
-      whatsapp: '+966501234567',
-      instagram_url: 'https://instagram.com/greazy',
-      facebook_url: 'https://facebook.com/greazy',
-      twitter_url: 'https://twitter.com/greazy',
-    };
+    if (!supabaseServiceKey) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for database operations');
+    }
+    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error || !data) return undefined;
+    return data as User;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    if (error || !data) return undefined;
+    return data as User;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const { data, error } = await this.supabase
+      .from('users')
+      .insert({ ...insertUser, id })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data as User;
   }
 
   async getCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values()).sort((a, b) => a.id - b.id);
+    const { data, error } = await this.supabase
+      .from('categories')
+      .select('*')
+      .order('id', { ascending: true });
+    if (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
+    return (data || []) as Category[];
   }
 
   async getCategory(id: number): Promise<Category | undefined> {
-    return this.categories.get(id);
+    const { data, error } = await this.supabase
+      .from('categories')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error || !data) return undefined;
+    return data as Category;
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
-    const id = this.nextCategoryId++;
-    const newCategory: Category = { 
-      id, 
-      name: category.name,
-      image_url: category.image_url ?? null,
-    };
-    this.categories.set(id, newCategory);
-    return newCategory;
+    const { data, error } = await this.supabase
+      .from('categories')
+      .insert({
+        name: category.name,
+        image_url: category.image_url || null
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data as Category;
   }
 
   async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
-    const existing = this.categories.get(id);
-    if (!existing) return undefined;
-    const updated: Category = { 
-      ...existing, 
-      name: category.name ?? existing.name,
-      image_url: category.image_url !== undefined ? category.image_url : existing.image_url,
-    };
-    this.categories.set(id, updated);
-    return updated;
+    const updateData: any = {};
+    if (category.name !== undefined) updateData.name = category.name;
+    if (category.image_url !== undefined) updateData.image_url = category.image_url;
+
+    const { data, error } = await this.supabase
+      .from('categories')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error || !data) return undefined;
+    return data as Category;
   }
 
   async deleteCategory(id: number): Promise<boolean> {
-    const menuItemsToDelete = Array.from(this.menuItems.values()).filter(item => item.category_id === id);
-    menuItemsToDelete.forEach(item => this.menuItems.delete(item.id));
-    return this.categories.delete(id);
+    await this.supabase
+      .from('menu_items')
+      .delete()
+      .eq('category_id', id);
+    
+    const { error } = await this.supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+    return !error;
   }
 
   async getMenuItems(categoryId?: number): Promise<MenuItem[]> {
-    const items = Array.from(this.menuItems.values());
+    let query = this.supabase.from('menu_items').select('*').order('id', { ascending: true });
     if (categoryId !== undefined) {
-      return items.filter(item => item.category_id === categoryId).sort((a, b) => a.id - b.id);
+      query = query.eq('category_id', categoryId);
     }
-    return items.sort((a, b) => a.id - b.id);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching menu items:', error);
+      return [];
+    }
+    return (data || []) as MenuItem[];
   }
 
   async getMenuItem(id: number): Promise<MenuItem | undefined> {
-    return this.menuItems.get(id);
+    const { data, error } = await this.supabase
+      .from('menu_items')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error || !data) return undefined;
+    return data as MenuItem;
   }
 
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    const id = this.nextMenuItemId++;
-    const newItem: MenuItem = { 
-      id, 
-      name: item.name,
-      description: item.description ?? null,
-      price: item.price,
-      image_url: item.image_url ?? null,
-      category_id: item.category_id ?? null,
-    };
-    this.menuItems.set(id, newItem);
-    return newItem;
+    const { data, error } = await this.supabase
+      .from('menu_items')
+      .insert({
+        name: item.name,
+        description: item.description || null,
+        price: item.price,
+        image_url: item.image_url || null,
+        category_id: item.category_id || null
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data as MenuItem;
   }
 
   async updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
-    const existing = this.menuItems.get(id);
-    if (!existing) return undefined;
-    const updated: MenuItem = { 
-      ...existing, 
-      name: item.name ?? existing.name,
-      description: item.description !== undefined ? item.description : existing.description,
-      price: item.price ?? existing.price,
-      image_url: item.image_url !== undefined ? item.image_url : existing.image_url,
-      category_id: item.category_id !== undefined ? item.category_id : existing.category_id,
-    };
-    this.menuItems.set(id, updated);
-    return updated;
+    const updateData: any = {};
+    if (item.name !== undefined) updateData.name = item.name;
+    if (item.description !== undefined) updateData.description = item.description;
+    if (item.price !== undefined) updateData.price = item.price;
+    if (item.image_url !== undefined) updateData.image_url = item.image_url;
+    if (item.category_id !== undefined) updateData.category_id = item.category_id;
+
+    const { data, error } = await this.supabase
+      .from('menu_items')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error || !data) return undefined;
+    return data as MenuItem;
   }
 
   async deleteMenuItem(id: number): Promise<boolean> {
-    return this.menuItems.delete(id);
+    const { error } = await this.supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', id);
+    return !error;
   }
 
   async getContactInfo(): Promise<ContactInfo | undefined> {
-    return this.contactInfo;
+    const { data, error } = await this.supabase
+      .from('contact_info')
+      .select('*')
+      .order('id', { ascending: true })
+      .limit(1)
+      .single();
+    if (error || !data) return undefined;
+    return data as ContactInfo;
   }
 
   async updateContactInfo(info: InsertContactInfo): Promise<ContactInfo> {
-    this.contactInfo = { 
-      id: 1,
-      phone: info.phone ?? null,
-      email: info.email ?? null,
-      address: info.address ?? null,
-      opening_hours: info.opening_hours ?? null,
-      whatsapp: info.whatsapp ?? null,
-      instagram_url: info.instagram_url ?? null,
-      facebook_url: info.facebook_url ?? null,
-      twitter_url: info.twitter_url ?? null,
-    };
-    return this.contactInfo;
+    const existing = await this.getContactInfo();
+    
+    if (existing) {
+      const { data, error } = await this.supabase
+        .from('contact_info')
+        .update({
+          phone: info.phone || null,
+          email: info.email || null,
+          address: info.address || null,
+          opening_hours: info.opening_hours || null,
+          whatsapp: info.whatsapp || null,
+          instagram_url: info.instagram_url || null,
+          facebook_url: info.facebook_url || null,
+          twitter_url: info.twitter_url || null,
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data as ContactInfo;
+    } else {
+      const { data, error } = await this.supabase
+        .from('contact_info')
+        .insert({
+          phone: info.phone || null,
+          email: info.email || null,
+          address: info.address || null,
+          opening_hours: info.opening_hours || null,
+          whatsapp: info.whatsapp || null,
+          instagram_url: info.instagram_url || null,
+          facebook_url: info.facebook_url || null,
+          twitter_url: info.twitter_url || null,
+        })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data as ContactInfo;
+    }
   }
 
   async getGalleryImages(): Promise<GalleryImage[]> {
-    return Array.from(this.galleryImages.values()).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    const { data, error } = await this.supabase
+      .from('gallery_images')
+      .select('*')
+      .order('order_index', { ascending: true });
+    if (error) {
+      console.error('Error fetching gallery images:', error);
+      return [];
+    }
+    return (data || []) as GalleryImage[];
   }
 
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
-    const id = this.nextGalleryImageId++;
-    const newImage: GalleryImage = { 
-      id, 
-      image_url: image.image_url,
-      title: image.title ?? null,
-      order_index: image.order_index ?? null,
-    };
-    this.galleryImages.set(id, newImage);
-    return newImage;
+    const { data, error } = await this.supabase
+      .from('gallery_images')
+      .insert({
+        image_url: image.image_url,
+        title: image.title || null,
+        order_index: image.order_index || 0
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data as GalleryImage;
   }
 
   async deleteGalleryImage(id: number): Promise<boolean> {
-    return this.galleryImages.delete(id);
+    const { error } = await this.supabase
+      .from('gallery_images')
+      .delete()
+      .eq('id', id);
+    return !error;
   }
 
   async getPlaceImages(): Promise<PlaceImage[]> {
-    return Array.from(this.placeImages.values());
+    const { data, error } = await this.supabase
+      .from('place_images')
+      .select('*');
+    if (error) {
+      console.error('Error fetching place images:', error);
+      return [];
+    }
+    return (data || []) as PlaceImage[];
   }
 
   async createPlaceImage(image: InsertPlaceImage): Promise<PlaceImage> {
     const id = randomUUID();
-    const newImage: PlaceImage = { ...image, id };
-    this.placeImages.set(id, newImage);
-    return newImage;
+    const { data, error } = await this.supabase
+      .from('place_images')
+      .insert({
+        id,
+        image_url: image.image_url
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data as PlaceImage;
   }
 
   async deletePlaceImage(id: string): Promise<boolean> {
-    return this.placeImages.delete(id);
+    const { error } = await this.supabase
+      .from('place_images')
+      .delete()
+      .eq('id', id);
+    return !error;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new SupabaseStorage();
