@@ -65,7 +65,7 @@ export default function Menu() {
   });
 
   const { data: menuItems, isLoading: itemsLoading } = useQuery<MenuItem[]>({
-    queryKey: ['/api/menu-items', selectedCategory?.id],
+    queryKey: ['/api/menu-items'],
     enabled: !!selectedCategory,
   });
 
@@ -105,7 +105,7 @@ export default function Menu() {
 
         {!selectedCategory ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(categories || placeholderCategories).map((category, index) => (
+            {(Array.isArray(categories) && categories.length > 0 ? categories : placeholderCategories).map((category, index) => (
               <Card
                 key={category.id}
                 data-testid={`category-card-${category.id}`}
@@ -148,7 +148,7 @@ export default function Menu() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(menuItems || placeholderMenuItems[selectedCategory.id] || []).filter(item => item.categoryId === selectedCategory.id).map((item, index) => (
+                {(Array.isArray(menuItems) && menuItems.length > 0 ? menuItems : (placeholderMenuItems[selectedCategory.id] || [])).filter(item => item.categoryId === selectedCategory.id).map((item, index) => (
                   <Card
                     key={item.id}
                     data-testid={`menu-item-${item.id}`}
