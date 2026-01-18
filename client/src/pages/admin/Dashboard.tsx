@@ -566,7 +566,13 @@ function MenuItemsTab({ toast }: { toast: any }) {
 
   const openEditDialog = (item: MenuItem) => {
     setEditingItem(item);
-    setFormData({ name: item.name, description: item.description, price: item.price.toString(), imageUrl: item.imageUrl, categoryId: item.categoryId.toString() });
+    setFormData({ 
+      name: item.name, 
+      description: item.description || '', 
+      price: item.price?.toString() || '', 
+      imageUrl: item.imageUrl || '', 
+      categoryId: item.categoryId?.toString() || '' 
+    });
     setIsDialogOpen(true);
   };
 
