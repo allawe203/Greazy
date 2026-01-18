@@ -1,4 +1,4 @@
-import heroVideo from '@assets/vecteezy_restaurant-design-tableware-waiting-for-the-guests-an_1768668278535.mp4';
+const heroVideoUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co/storage/v1/object/public/images/videos/hero-video.mp4';
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src={heroVideo} type="video/mp4" />
+        <source src={heroVideoUrl} type="video/mp4" />
       </video>
     </div>
   );
