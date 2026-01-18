@@ -109,6 +109,20 @@ If file upload fails or Supabase Storage is not configured, users can manually e
 - Updated all pages to fetch data from backend API instead of Supabase directly
 - Added place_images table and API endpoints
 
+## Database (Supabase)
+The application is now fully connected to Supabase for data persistence:
+- **Categories**: Stored in `categories` table
+- **Menu Items**: Stored in `menu_items` table  
+- **Contact Info**: Stored in `contact_info` table
+- **Gallery Images**: Stored in `gallery_images` table
+- **Place Images**: Stored in `place_images` table
+
+### Required Environment Variables
+- `SUPABASE_SERVICE_ROLE_KEY` - Required for database and storage operations
+
+### Storage
+File uploads use Supabase Storage bucket "images" with folders: categories/, menu-items/, our-place/
+
 ## Development
 ```bash
 npm run dev  # Start development server
