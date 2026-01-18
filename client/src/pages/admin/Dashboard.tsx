@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -110,31 +109,24 @@ async function apiFetch(url: string, options?: RequestInit) {
   return res.json();
 }
 
-async function uploadToSupabase(file: File, bucket: string, folder: string): Promise<{ url: string | null; error: string | null }> {
+async function uploadFile(file: File, folder: string): Promise<{ url: string | null; error: string | null }> {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${Date.now()}.${fileExt}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
     
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file, { upsert: true });
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
     
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      if (uploadError.message?.includes('Bucket not found')) {
-        return { url: null, error: `Storage bucket "${bucket}" not found. Please create it in your Supabase dashboard.` };
-      }
-      if (uploadError.message?.includes('policy')) {
-        return { url: null, error: 'Storage permissions error. Please configure RLS policies for the storage bucket.' };
-      }
-      return { url: null, error: uploadError.message || 'Upload failed. Please enter an image URL manually.' };
+    const data = await res.json();
+    
+    if (!res.ok) {
+      return { url: null, error: data.error || 'Upload failed' };
     }
     
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-    
-    return { url: publicUrl, error: null };
+    return { url: data.url, error: null };
   } catch (error) {
     console.error('Upload failed:', error);
     return { url: null, error: 'Upload failed. Please enter an image URL manually.' };
@@ -308,7 +300,7 @@ function CategoriesTab({ toast }: { toast: any }) {
     if (!file) return;
     
     setUploading(true);
-    const result = await uploadToSupabase(file, 'images', 'categories');
+    const result = await uploadFile(file, 'categories');
     setUploading(false);
     
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -509,7 +501,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
     if (!file) return;
     
     setUploading(true);
-    const result = await uploadToSupabase(file, 'images', 'menu-items');
+    const result = await uploadFile(file, 'menu-items');
     setUploading(false);
     
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -757,7 +749,7 @@ function PlaceImagesTab({ toast }: { toast: any }) {
     if (!file) return;
     
     setUploading(true);
-    const result = await uploadToSupabase(file, 'images', 'our-place');
+    const result = await uploadFile(file, 'our-place');
     setUploading(false);
     
     if (fileInputRef.current) fileInputRef.current.value = '';

@@ -9,8 +9,21 @@ import {
   insertPlaceImageSchema
 } from "@shared/schema";
 import crypto from "crypto";
+import multer from "multer";
+import { createClient } from "@supabase/supabase-js";
 
 const EXPECTED_PASSWORD = 'greazy@online_02365149875298';
+
+// Supabase configuration
+const supabaseUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabase = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+
+// Multer configuration for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 function transformToSnakeCase(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
@@ -54,6 +67,48 @@ export async function registerRoutes(
       }
     } catch (error) {
       res.status(500).json({ error: "Authentication failed" });
+    }
+  });
+
+  // File upload endpoint
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      if (!supabase) {
+        return res.status(500).json({ 
+          error: "Storage not configured. Please add SUPABASE_SERVICE_ROLE_KEY to enable file uploads." 
+        });
+      }
+
+      const folder = req.body.folder || 'uploads';
+      const fileExt = req.file.originalname.split('.').pop();
+      const fileName = `${folder}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        return res.status(500).json({ 
+          error: uploadError.message || "Failed to upload file to storage" 
+        });
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+
+      res.json({ url: publicUrl });
+    } catch (error) {
+      console.error('Upload error:', error);
+      res.status(500).json({ error: "Failed to upload file" });
     }
   });
 
@@ -146,13 +201,19 @@ export async function registerRoutes(
   app.post("/api/menu-items", async (req, res) => {
     try {
       const snakeCaseBody = transformToSnakeCase(req.body);
+      // Convert price to string if it's a number (Drizzle decimal expects string)
+      if (typeof snakeCaseBody.price === 'number') {
+        snakeCaseBody.price = snakeCaseBody.price.toString();
+      }
       const parsed = insertMenuItemSchema.safeParse(snakeCaseBody);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid menu item data" });
+        console.log('Menu item validation error:', parsed.error.errors);
+        return res.status(400).json({ error: "Invalid menu item data", details: parsed.error.errors });
       }
       const item = await storage.createMenuItem(parsed.data);
       res.status(201).json(transformToCamelCase(item));
     } catch (error) {
+      console.error('Error creating menu item:', error);
       res.status(500).json({ error: "Failed to create menu item" });
     }
   });
@@ -161,12 +222,17 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       const snakeCaseBody = transformToSnakeCase(req.body);
+      // Convert price to string if it's a number (Drizzle decimal expects string)
+      if (typeof snakeCaseBody.price === 'number') {
+        snakeCaseBody.price = snakeCaseBody.price.toString();
+      }
       const item = await storage.updateMenuItem(id, snakeCaseBody);
       if (!item) {
         return res.status(404).json({ error: "Menu item not found" });
       }
       res.json(transformToCamelCase(item));
     } catch (error) {
+      console.error('Error updating menu item:', error);
       res.status(500).json({ error: "Failed to update menu item" });
     }
   });
