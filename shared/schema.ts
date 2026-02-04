@@ -56,6 +56,7 @@ export const contactInfo = pgTable("contact_info", {
   instagram_url: text("instagram_url"),
   facebook_url: text("facebook_url"),
   twitter_url: text("twitter_url"),
+  google_maps_url: text("google_maps_url"),
 });
 
 export const insertContactInfoSchema = createInsertSchema(contactInfo).omit({

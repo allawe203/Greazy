@@ -44,8 +44,34 @@ export interface IStorage {
   deletePlaceImage(id: string): Promise<boolean>;
 }
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 const supabaseUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// Temporary file-based storage for google_maps_url until Supabase schema cache refreshes
+const MAPS_URL_FILE = path.join(process.cwd(), '.google_maps_url.json');
+
+function getStoredMapsUrl(): string | null {
+  try {
+    if (fs.existsSync(MAPS_URL_FILE)) {
+      const data = JSON.parse(fs.readFileSync(MAPS_URL_FILE, 'utf-8'));
+      return data.url || null;
+    }
+  } catch {
+    // File doesn't exist or is invalid
+  }
+  return null;
+}
+
+function setStoredMapsUrl(url: string | null): void {
+  try {
+    fs.writeFileSync(MAPS_URL_FILE, JSON.stringify({ url }));
+  } catch (err) {
+    console.error('Failed to store maps URL:', err);
+  }
+}
 
 export class SupabaseStorage implements IStorage {
   private supabase: SupabaseClient;
@@ -54,7 +80,10 @@ export class SupabaseStorage implements IStorage {
     if (!supabaseServiceKey) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for database operations');
     }
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
+    this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'public' },
+      global: { headers: { 'x-my-custom-header': 'refresh-schema' } }
+    });
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -224,47 +253,53 @@ export class SupabaseStorage implements IStorage {
       .limit(1)
       .single();
     if (error || !data) return undefined;
-    return data as ContactInfo;
+    
+    // Use file-based storage for google_maps_url until Supabase schema cache refreshes
+    const googleMapsUrl = getStoredMapsUrl();
+    
+    return { ...data, google_maps_url: googleMapsUrl } as ContactInfo;
   }
 
   async updateContactInfo(info: InsertContactInfo): Promise<ContactInfo> {
     const existing = await this.getContactInfo();
     
+    // Base update data (fields that are in the cached schema)
+    const baseUpdateData = {
+      phone: info.phone || null,
+      email: info.email || null,
+      address: info.address || null,
+      opening_hours: info.opening_hours || null,
+      whatsapp: info.whatsapp || null,
+      instagram_url: info.instagram_url || null,
+      facebook_url: info.facebook_url || null,
+      twitter_url: info.twitter_url || null,
+    };
+    
     if (existing) {
+      // Update the base fields first
       const { data, error } = await this.supabase
         .from('contact_info')
-        .update({
-          phone: info.phone || null,
-          email: info.email || null,
-          address: info.address || null,
-          opening_hours: info.opening_hours || null,
-          whatsapp: info.whatsapp || null,
-          instagram_url: info.instagram_url || null,
-          facebook_url: info.facebook_url || null,
-          twitter_url: info.twitter_url || null,
-        })
+        .update(baseUpdateData)
         .eq('id', existing.id)
         .select()
         .single();
       if (error) throw new Error(error.message);
-      return data as ContactInfo;
+      
+      // Store google_maps_url in file until Supabase schema cache refreshes
+      if (info.google_maps_url !== undefined) {
+        setStoredMapsUrl(info.google_maps_url || null);
+      }
+      
+      return { ...data, google_maps_url: info.google_maps_url || null } as ContactInfo;
     } else {
       const { data, error } = await this.supabase
         .from('contact_info')
-        .insert({
-          phone: info.phone || null,
-          email: info.email || null,
-          address: info.address || null,
-          opening_hours: info.opening_hours || null,
-          whatsapp: info.whatsapp || null,
-          instagram_url: info.instagram_url || null,
-          facebook_url: info.facebook_url || null,
-          twitter_url: info.twitter_url || null,
-        })
+        .insert(baseUpdateData)
         .select()
         .single();
       if (error) throw new Error(error.message);
-      return data as ContactInfo;
+      
+      return { ...data, google_maps_url: info.google_maps_url || null } as ContactInfo;
     }
   }
 

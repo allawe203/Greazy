@@ -264,11 +264,13 @@ export async function registerRoutes(
       const snakeCaseBody = transformToSnakeCase(req.body);
       const parsed = insertContactInfoSchema.safeParse(snakeCaseBody);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid contact info data" });
+        console.error("Contact info validation error:", parsed.error);
+        return res.status(400).json({ error: "Invalid contact info data", details: parsed.error });
       }
       const info = await storage.updateContactInfo(parsed.data);
       res.json(transformToCamelCase(info));
     } catch (error) {
+      console.error("Contact info update error:", error);
       res.status(500).json({ error: "Failed to update contact info" });
     }
   });

@@ -13,18 +13,62 @@ interface ContactInfo {
   instagramUrl: string | null;
   facebookUrl: string | null;
   twitterUrl: string | null;
+  googleMapsUrl: string | null;
+}
+
+function getGoogleMapsEmbedUrl(mapsUrl: string | null): string {
+  if (!mapsUrl) return '';
+  
+  // If it's already an embed URL, return as-is
+  if (mapsUrl.includes('/embed')) {
+    return mapsUrl;
+  }
+  
+  // Try to extract place or coordinates from various Google Maps URL formats
+  try {
+    const url = new URL(mapsUrl);
+    
+    // Handle maps.google.com or google.com/maps URLs
+    // Extract place name or coordinates
+    const pathMatch = mapsUrl.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (pathMatch) {
+      const lat = pathMatch[1];
+      const lng = pathMatch[2];
+      return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d${lng}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z!5e0!3m2!1sen!2s!4v1234567890`;
+    }
+    
+    // Handle place URLs with /place/ in the path
+    const placeMatch = mapsUrl.match(/\/place\/([^\/]+)/);
+    if (placeMatch) {
+      const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+      return `https://www.google.com/maps/embed/v1/place?key=&q=${encodeURIComponent(placeName)}`;
+    }
+    
+    // Handle query parameter based URLs
+    const q = url.searchParams.get('q');
+    if (q) {
+      return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(q)}`;
+    }
+    
+    // Fallback: convert to embed format
+    return mapsUrl.replace('/maps/', '/maps/embed/') + '&output=embed';
+  } catch {
+    // If URL parsing fails, try a simple embed conversion
+    return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(mapsUrl)}`;
+  }
 }
 
 const defaultContact: ContactInfo = {
   id: 1,
-  phone: '+966501234567',
+  phone: '+27123456789',
   email: 'info@greazy.com',
-  address: 'King Fahd Road, Riyadh, Saudi Arabia',
+  address: 'Johannesburg, South Africa',
   openingHours: 'Daily 11:00 AM - 11:00 PM',
-  whatsapp: '+966501234567',
+  whatsapp: '+27123456789',
   instagramUrl: 'https://instagram.com/greazy',
   facebookUrl: 'https://facebook.com/greazy',
   twitterUrl: 'https://twitter.com/greazy',
+  googleMapsUrl: 'https://www.google.com/maps/place/Johannesburg,+South+Africa',
 };
 
 export default function AboutUs() {
@@ -132,17 +176,24 @@ export default function AboutUs() {
           </div>
 
           <div className="aspect-video rounded-lg overflow-hidden border border-[#3e3e3e]">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.7550445746854!2d46.6753!3d24.7136!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjTCsDQyJzQ5LjAiTiA0NsKwNDAnMzEuMSJF!5e0!3m2!1sen!2ssa!4v1234567890"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="GREAZY Location"
-              className="grayscale hover:grayscale-0 transition-all duration-500"
-            />
+            {contact.googleMapsUrl ? (
+              <iframe
+                src={getGoogleMapsEmbedUrl(contact.googleMapsUrl)}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="GREAZY Location"
+                className="grayscale hover:grayscale-0 transition-all duration-500"
+                data-testid="google-map-iframe"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a] text-[#606161]">
+                <MapPin className="w-12 h-12" />
+              </div>
+            )}
           </div>
         </Card>
 
