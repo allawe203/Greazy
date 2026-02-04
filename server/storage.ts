@@ -304,34 +304,42 @@ export class SupabaseStorage implements IStorage {
 
   async getPlaceImages(): Promise<PlaceImage[]> {
     const { data, error } = await this.supabase
-      .from('place_images')
-      .select('*');
+      .from('gallery_images')
+      .select('*')
+      .order('id', { ascending: true });
     if (error) {
       console.error('Error fetching place images:', error);
       return [];
     }
-    return (data || []) as PlaceImage[];
+    return (data || []).map((item: any) => ({
+      id: String(item.id),
+      image_url: item.image_url
+    })) as PlaceImage[];
   }
 
   async createPlaceImage(image: InsertPlaceImage): Promise<PlaceImage> {
-    const id = randomUUID();
     const { data, error } = await this.supabase
-      .from('place_images')
+      .from('gallery_images')
       .insert({
-        id,
-        image_url: image.image_url
+        image_url: image.image_url,
+        title: null,
+        order_index: 0
       })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as PlaceImage;
+    return {
+      id: String(data.id),
+      image_url: data.image_url
+    } as PlaceImage;
   }
 
   async deletePlaceImage(id: string): Promise<boolean> {
+    const numericId = parseInt(id, 10);
     const { error } = await this.supabase
-      .from('place_images')
+      .from('gallery_images')
       .delete()
-      .eq('id', id);
+      .eq('id', numericId);
     return !error;
   }
 }
