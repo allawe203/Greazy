@@ -175,27 +175,7 @@ export default function AboutUs() {
             </div>
           </div>
 
-          <div className="aspect-video rounded-lg overflow-hidden border border-[#3e3e3e]">
-            {contact.googleMapsUrl ? (
-              <iframe
-                src={getGoogleMapsEmbedUrl(contact.googleMapsUrl)}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="GREAZY Location"
-                className="grayscale hover:grayscale-0 transition-all duration-500"
-                data-testid="google-map-iframe"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a] text-[#606161]">
-                <MapPin className="w-12 h-12" />
-              </div>
-            )}
-          </div>
-        </Card>
+                  </Card>
 
         <div className="text-center">
           <h2 className="text-2xl font-bold text-[#f5e6c7] mb-6">Follow Us</h2>
