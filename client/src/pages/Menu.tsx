@@ -168,7 +168,7 @@ export default function Menu() {
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <h3 className="text-xl font-bold text-[#f5e6c7]">{item.name}</h3>
                         <span className="text-xl font-black text-[#f36e27] whitespace-nowrap">
-                          SAR {item.price}
+                          ZAR {item.price}
                         </span>
                       </div>
                       <p className="text-[#f5e6c7]/70 text-sm leading-relaxed">{item.description}</p>
