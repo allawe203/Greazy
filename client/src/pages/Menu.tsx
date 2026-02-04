@@ -104,7 +104,7 @@ export default function Menu() {
         </div>
 
         {!selectedCategory ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {(Array.isArray(categories) && categories.length > 0 ? categories : placeholderCategories).map((category, index) => (
               <Card
                 key={category.id}
@@ -113,15 +113,15 @@ export default function Menu() {
                 className="group cursor-pointer overflow-hidden bg-[#2e2e2e] border-[#3e3e3e] hover:border-[#f36e27] transition-all duration-300 transform hover:scale-[1.02]"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="aspect-[4/3] relative overflow-hidden">
+                <div className="aspect-square sm:aspect-[4/3] relative overflow-hidden">
                   <img
                     src={category.imageUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80'}
                     alt={category.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#222222] via-transparent to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <h3 className="text-2xl font-bold text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-6">
+                    <h3 className="text-lg sm:text-2xl font-bold text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors">
                       {category.name}
                     </h3>
                   </div>

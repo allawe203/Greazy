@@ -8,7 +8,7 @@ const navLinks = [
   { href: '/menu', label: 'Menu' },
   { href: '/reservations', label: 'Reservations' },
   { href: '/our-place', label: 'Our Place' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/about-us', label: 'About Us' },
 ];
 
 export function Navbar() {

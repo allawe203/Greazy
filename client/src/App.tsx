@@ -4,11 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import Home from "@/pages/Home";
 import Menu from "@/pages/Menu";
 import Reservations from "@/pages/Reservations";
 import OurPlace from "@/pages/OurPlace";
-import Contact from "@/pages/Contact";
+import AboutUs from "@/pages/AboutUs";
 import AdminLogin from "@/pages/admin/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import NotFound from "@/pages/not-found";
@@ -20,7 +21,8 @@ function Router() {
       <Route path="/menu" component={Menu} />
       <Route path="/reservations" component={Reservations} />
       <Route path="/our-place" component={OurPlace} />
-      <Route path="/contact" component={Contact} />
+      <Route path="/about-us" component={AboutUs} />
+      <Route path="/contact" component={AboutUs} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
@@ -33,9 +35,12 @@ function AppContent() {
   const isAdminRoute = location.startsWith('/admin');
 
   return (
-    <div className="min-h-screen bg-[#222222]">
+    <div className="min-h-screen bg-[#222222] flex flex-col">
       {!isAdminRoute && <Navbar />}
-      <Router />
+      <main className="flex-1">
+        <Router />
+      </main>
+      {!isAdminRoute && <Footer />}
     </div>
   );
 }

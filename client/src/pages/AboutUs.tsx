@@ -27,7 +27,7 @@ const defaultContact: ContactInfo = {
   twitterUrl: 'https://twitter.com/greazy',
 };
 
-export default function Contact() {
+export default function AboutUs() {
   const { data: contactInfo } = useQuery<ContactInfo>({
     queryKey: ['/api/contact'],
   });
@@ -75,8 +75,8 @@ export default function Contact() {
     <div className="min-h-screen bg-[#222222] pt-24 pb-16 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 data-testid="contact-title" className="text-4xl md:text-5xl font-black text-[#f36e27] mb-4">
-            Contact Us
+          <h1 data-testid="about-us-title" className="text-4xl md:text-5xl font-black text-[#f36e27] mb-4">
+            About Us
           </h1>
           <p className="text-[#f5e6c7]/80 text-lg">We'd love to hear from you</p>
         </div>
