@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { ShoppingBag } from 'lucide-react';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
+import logo from '@assets/V1_1768668285045.png';
 
 const heroVideoUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co/storage/v1/object/public/images/videos/hero-video.mp4';
 
@@ -20,9 +21,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-        <h1 className="text-4xl md:text-6xl font-black text-white mb-4 drop-shadow-lg">
-          GREAZY
-        </h1>
+        <img src={logo} alt="GREAZY" className="h-24 md:h-36 w-auto mb-4 drop-shadow-lg" />
         <p className="text-xl md:text-2xl text-[#f5e6c7] mb-8 drop-shadow-md">
           We Stack, You Attack
         </p>
