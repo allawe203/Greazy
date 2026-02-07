@@ -22,9 +22,6 @@ export default function Home() {
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <img src={Greazy_logo_Black_Stroke} alt="GREAZY" className="h-24 md:h-36 w-auto mb-4 drop-shadow-lg" />
-        <p className="text-xl md:text-2xl text-[#f5e6c7] mb-8 drop-shadow-md">
-          We Stack, You Attack
-        </p>
         <Link
           href="/menu"
           data-testid="order-now-button"
