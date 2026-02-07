@@ -976,6 +976,17 @@ function ContactTab({ toast }: { toast: any }) {
                 <label className="block text-sm text-[#606161] mb-2">Opening Hours</label>
                 <Input value={formData.openingHours} onChange={(e) => setFormData({ ...formData, openingHours: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Google Maps Link</label>
+                <Input 
+                  value={formData.googleMapsUrl} 
+                  onChange={(e) => setFormData({ ...formData, googleMapsUrl: e.target.value })} 
+                  placeholder="https://www.google.com/maps/place/..." 
+                  className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" 
+                  data-testid="input-google-maps-url"
+                />
+                <p className="text-xs text-[#606161] mt-1">This link will appear as a floating button on the website</p>
+              </div>
                           </div>
           </Card>
 

@@ -29,25 +29,67 @@ export function Navbar() {
   }, [location]);
 
   return (
-    <nav
-      data-testid="navbar"
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-[#222222]/95 backdrop-blur-md shadow-lg' : 'bg-[#222222]'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          <Link href="/" className="flex items-center" data-testid="logo-link">
-            <img src={logo} alt="GREAZY" className="h-12 md:h-16 w-auto" />
-          </Link>
+    <>
+      {isOpen && (
+        <div
+          data-testid="mobile-menu-backdrop"
+          className="fixed inset-0 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+          onTouchStart={() => setIsOpen(false)}
+        />
+      )}
+      <nav
+        data-testid="navbar"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? 'bg-[#222222]/95 backdrop-blur-md shadow-lg' : 'bg-[#222222]'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            <Link href="/" className="flex items-center" data-testid="logo-link">
+              <img src={logo} alt="GREAZY" className="h-12 md:h-16 w-auto" />
+            </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  data-testid={`nav-${link.label.toLowerCase().replace(' ', '-')}`}
+                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    location === link.href
+                      ? 'text-[#f36e27] bg-[#f36e27]/10'
+                      : 'text-[#f5e6c7] hover:text-[#f36e27] hover:bg-[#f36e27]/5'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            <button
+              data-testid="mobile-menu-toggle"
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden p-2 text-[#f5e6c7] hover:text-[#f36e27] transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+
+        <div
+          className={`md:hidden absolute top-full left-0 right-0 bg-[#222222]/98 backdrop-blur-md border-t border-[#3e3e3e] transition-all duration-300 ease-in-out ${
+            isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+          }`}
+        >
+          <div className="px-4 py-4 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                data-testid={`nav-${link.label.toLowerCase().replace(' ', '-')}`}
-                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                data-testid={`mobile-nav-${link.label.toLowerCase().replace(' ', '-')}`}
+                className={`block px-4 py-3 rounded-md text-base font-semibold transition-all duration-200 ${
                   location === link.href
                     ? 'text-[#f36e27] bg-[#f36e27]/10'
                     : 'text-[#f5e6c7] hover:text-[#f36e27] hover:bg-[#f36e27]/5'
@@ -57,40 +99,8 @@ export function Navbar() {
               </Link>
             ))}
           </div>
-
-          <button
-            data-testid="mobile-menu-toggle"
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 text-[#f5e6c7] hover:text-[#f36e27] transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
-      </div>
-
-      <div
-        className={`md:hidden absolute top-full left-0 right-0 bg-[#222222]/98 backdrop-blur-md border-t border-[#3e3e3e] transition-all duration-300 ease-in-out ${
-          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-        }`}
-      >
-        <div className="px-4 py-4 space-y-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              data-testid={`mobile-nav-${link.label.toLowerCase().replace(' ', '-')}`}
-              className={`block px-4 py-3 rounded-md text-base font-semibold transition-all duration-200 ${
-                location === link.href
-                  ? 'text-[#f36e27] bg-[#f36e27]/10'
-                  : 'text-[#f5e6c7] hover:text-[#f36e27] hover:bg-[#f36e27]/5'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
