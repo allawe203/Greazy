@@ -3,6 +3,8 @@ import { ShoppingBag } from 'lucide-react';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import logo from '@assets/V1_1768668285045.png';
 
+import Greazy_logo_Black_Stroke from "@assets/Greazy_logo_Black_Stroke.png";
+
 const heroVideoUrl = 'https://umyrutkzbunvqeumrqwi.supabase.co/storage/v1/object/public/images/videos/hero-video.mp4';
 
 export default function Home() {
@@ -17,11 +19,9 @@ export default function Home() {
       >
         <source src={heroVideoUrl} type="video/mp4" />
       </video>
-
       <div className="absolute inset-0 bg-black/40" />
-
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-        <img src={logo} alt="GREAZY" className="h-24 md:h-36 w-auto mb-4 drop-shadow-lg" />
+        <img src={Greazy_logo_Black_Stroke} alt="GREAZY" className="h-24 md:h-36 w-auto mb-4 drop-shadow-lg" />
         <p className="text-xl md:text-2xl text-[#f5e6c7] mb-8 drop-shadow-md">
           We Stack, You Attack
         </p>
@@ -34,7 +34,6 @@ export default function Home() {
           Order Now
         </Link>
       </div>
-
       <WhatsAppButton />
     </div>
   );
