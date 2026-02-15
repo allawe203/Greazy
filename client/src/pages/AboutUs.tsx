@@ -122,7 +122,11 @@ export default function AboutUs() {
           <h1 data-testid="about-us-title" className="text-4xl md:text-5xl font-black text-[#f36e27] mb-4">
             About Us
           </h1>
-          <p className="text-[#f5e6c7]/80 text-lg">We'd love to hear from you</p>
+          <p className="text-[#f5e6c7]/80 text-lg max-w-2xl mx-auto" data-testid="about-us-description">
+            Welcome to GREAZY — where bold flavors meet street food culture. We're all about stacking up the tastiest, 
+            juiciest bites that keep you coming back for more. Every dish is crafted with passion, fresh ingredients, 
+            and a whole lot of love. Come hungry, leave happy.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-12">

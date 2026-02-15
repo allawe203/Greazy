@@ -18,6 +18,16 @@ export function WhatsAppButton() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-center">
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-testid="whatsapp-floating-button"
+        className="bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageCircle className="w-7 h-7" />
+      </a>
       {googleMapsUrl && (
         <a
           href={googleMapsUrl}
@@ -30,16 +40,6 @@ export function WhatsAppButton() {
           <MapPin className="w-7 h-7" />
         </a>
       )}
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        data-testid="whatsapp-floating-button"
-        className="bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle className="w-7 h-7" />
-      </a>
     </div>
   );
 }

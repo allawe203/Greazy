@@ -6,8 +6,8 @@ import logo from '@assets/V1_1768668285045.png';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/menu', label: 'Menu' },
-  { href: '/reservations', label: 'Reservations' },
   { href: '/our-place', label: 'Our Place' },
+  { href: '/reservations', label: 'Reservations' },
   { href: '/about-us', label: 'About Us' },
 ];
 

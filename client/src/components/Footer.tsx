@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
+import { SiInstagram, SiFacebook, SiX } from 'react-icons/si';
 import logo from '@assets/V1_1768668285045.png';
 
 interface ContactInfo {
@@ -18,8 +19,8 @@ interface ContactInfo {
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/menu', label: 'Menu' },
-  { href: '/reservations', label: 'Reservations' },
   { href: '/our-place', label: 'Our Place' },
+  { href: '/reservations', label: 'Reservations' },
   { href: '/about-us', label: 'About Us' },
 ];
 
@@ -118,7 +119,45 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-[#3e3e3e] text-center">
+        <div className="mt-8 pt-8 border-t border-[#3e3e3e] flex flex-col items-center gap-4">
+          <div className="flex items-center gap-4">
+            {contactInfo?.instagramUrl && (
+              <a
+                href={contactInfo.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="footer-social-instagram"
+                className="p-3 rounded-lg bg-[#2e2e2e] border border-[#3e3e3e] hover:border-[#f36e27] hover:bg-[#f36e27]/10 transition-all duration-300 group"
+                aria-label="Instagram"
+              >
+                <SiInstagram className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
+              </a>
+            )}
+            {contactInfo?.facebookUrl && (
+              <a
+                href={contactInfo.facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="footer-social-facebook"
+                className="p-3 rounded-lg bg-[#2e2e2e] border border-[#3e3e3e] hover:border-[#f36e27] hover:bg-[#f36e27]/10 transition-all duration-300 group"
+                aria-label="Facebook"
+              >
+                <SiFacebook className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
+              </a>
+            )}
+            {contactInfo?.twitterUrl && (
+              <a
+                href={contactInfo.twitterUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="footer-social-twitter"
+                className="p-3 rounded-lg bg-[#2e2e2e] border border-[#3e3e3e] hover:border-[#f36e27] hover:bg-[#f36e27]/10 transition-all duration-300 group"
+                aria-label="X"
+              >
+                <SiX className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
+              </a>
+            )}
+          </div>
           <p className="text-[#606161] text-sm">
             © {new Date().getFullYear()} GREAZY. All rights reserved.
           </p>
