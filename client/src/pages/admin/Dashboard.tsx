@@ -69,7 +69,8 @@ interface ContactInfo {
   whatsapp: string;
   instagramUrl: string;
   facebookUrl: string;
-  twitterUrl: string;
+  tiktokUrl: string;
+  snapchatUrl: string;
   googleMapsUrl: string;
 }
 
@@ -89,7 +90,8 @@ const defaultContact: ContactInfo = {
   whatsapp: '+966501234567',
   instagramUrl: 'https://instagram.com/greazy',
   facebookUrl: 'https://facebook.com/greazy',
-  twitterUrl: 'https://twitter.com/greazy',
+  tiktokUrl: 'https://tiktok.com/@greazy',
+  snapchatUrl: 'https://snapchat.com/add/greazy',
   googleMapsUrl: '',
 };
 
@@ -1002,8 +1004,12 @@ function ContactTab({ toast }: { toast: any }) {
                 <Input value={formData.facebookUrl} onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
               <div>
-                <label className="block text-sm text-[#606161] mb-2">Twitter URL</label>
-                <Input value={formData.twitterUrl} onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+                <label className="block text-sm text-[#606161] mb-2">TikTok URL</label>
+                <Input value={formData.tiktokUrl} onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
+              </div>
+              <div>
+                <label className="block text-sm text-[#606161] mb-2">Snapchat URL</label>
+                <Input value={formData.snapchatUrl} onChange={(e) => setFormData({ ...formData, snapchatUrl: e.target.value })} className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" />
               </div>
             </div>
           </Card>

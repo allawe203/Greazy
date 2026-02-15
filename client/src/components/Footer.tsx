@@ -1,7 +1,7 @@
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
-import { SiInstagram, SiFacebook, SiX } from 'react-icons/si';
+import { SiInstagram, SiFacebook, SiTiktok, SiSnapchat } from 'react-icons/si';
 import logo from '@assets/V1_1768668285045.png';
 
 interface ContactInfo {
@@ -13,7 +13,8 @@ interface ContactInfo {
   whatsapp: string | null;
   instagramUrl: string | null;
   facebookUrl: string | null;
-  twitterUrl: string | null;
+  tiktokUrl: string | null;
+  snapchatUrl: string | null;
 }
 
 const navLinks = [
@@ -69,14 +70,24 @@ export function Footer() {
                 <SiFacebook className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
               </a>
               <a
-                href={contactInfo?.twitterUrl || '#'}
+                href={contactInfo?.tiktokUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                data-testid="footer-social-twitter"
+                data-testid="footer-social-tiktok"
                 className="p-2 rounded-lg bg-[#2e2e2e] border border-[#3e3e3e] hover:border-[#f36e27] hover:bg-[#f36e27]/10 transition-all duration-300 group"
-                aria-label="X"
+                aria-label="TikTok"
               >
-                <SiX className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
+                <SiTiktok className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
+              </a>
+              <a
+                href={contactInfo?.snapchatUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="footer-social-snapchat"
+                className="p-2 rounded-lg bg-[#2e2e2e] border border-[#3e3e3e] hover:border-[#f36e27] hover:bg-[#f36e27]/10 transition-all duration-300 group"
+                aria-label="Snapchat"
+              >
+                <SiSnapchat className="w-5 h-5 text-[#f5e6c7] group-hover:text-[#f36e27] transition-colors" />
               </a>
             </div>
           </div>

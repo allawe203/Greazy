@@ -55,7 +55,8 @@ export const contactInfo = pgTable("contact_info", {
   whatsapp: varchar("whatsapp", { length: 50 }),
   instagram_url: text("instagram_url"),
   facebook_url: text("facebook_url"),
-  twitter_url: text("twitter_url"),
+  tiktok_url: text("tiktok_url"),
+  snapchat_url: text("snapchat_url"),
   google_maps_url: text("google_maps_url"),
 });
 

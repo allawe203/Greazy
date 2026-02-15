@@ -272,7 +272,8 @@ export class SupabaseStorage implements IStorage {
       whatsapp: info.whatsapp || null,
       instagram_url: info.instagram_url || null,
       facebook_url: info.facebook_url || null,
-      twitter_url: info.twitter_url || null,
+      tiktok_url: info.tiktok_url || null,
+      snapchat_url: info.snapchat_url || null,
     };
     
     if (existing) {

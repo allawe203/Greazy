@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
-import { SiInstagram, SiFacebook, SiX } from 'react-icons/si';
+import { SiInstagram, SiFacebook, SiTiktok, SiSnapchat } from 'react-icons/si';
 import { Card } from '@/components/ui/card';
 
 interface ContactInfo {
@@ -12,7 +12,8 @@ interface ContactInfo {
   whatsapp: string | null;
   instagramUrl: string | null;
   facebookUrl: string | null;
-  twitterUrl: string | null;
+  tiktokUrl: string | null;
+  snapchatUrl: string | null;
   googleMapsUrl: string | null;
 }
 
@@ -67,7 +68,8 @@ const defaultContact: ContactInfo = {
   whatsapp: '+27123456789',
   instagramUrl: 'https://instagram.com/greazy',
   facebookUrl: 'https://facebook.com/greazy',
-  twitterUrl: 'https://twitter.com/greazy',
+  tiktokUrl: 'https://tiktok.com/@greazy',
+  snapchatUrl: 'https://snapchat.com/add/greazy',
   googleMapsUrl: 'https://www.google.com/maps/place/Johannesburg,+South+Africa',
 };
 
@@ -112,7 +114,8 @@ export default function AboutUs() {
   const socialLinks = [
     { icon: SiInstagram, href: contact.instagramUrl || '#', label: 'Instagram', testId: 'social-instagram' },
     { icon: SiFacebook, href: contact.facebookUrl || '#', label: 'Facebook', testId: 'social-facebook' },
-    { icon: SiX, href: contact.twitterUrl || '#', label: 'Twitter', testId: 'social-twitter' },
+    { icon: SiTiktok, href: contact.tiktokUrl || '#', label: 'TikTok', testId: 'social-tiktok' },
+    { icon: SiSnapchat, href: contact.snapchatUrl || '#', label: 'Snapchat', testId: 'social-snapchat' },
   ];
 
   return (
