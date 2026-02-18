@@ -647,7 +647,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
                   </td>
                   <td className="p-4 text-[#f5e6c7] font-medium">{item.name}</td>
                   <td className="p-4 text-[#606161]">{getCategoryName(item.categoryId)}</td>
-                  <td className="p-4 text-[#f36e27] font-bold">SAR {item.price}</td>
+                  <td className="p-4 text-[#f36e27] font-bold">ZAR {item.price}</td>
                   <td className="p-4 text-right">
                     <Button size="icon" variant="ghost" onClick={() => openEditDialog(item)} className="text-[#f5e6c7] hover:text-[#f36e27]">
                       <Pencil className="w-4 h-4" />
@@ -684,7 +684,7 @@ function MenuItemsTab({ toast }: { toast: any }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-[#606161] mb-2">Price (SAR)</label>
+                <label className="block text-sm text-[#606161] mb-2">Price (ZAR)</label>
                 <Input type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="0.00" className="bg-[#222222] border-[#3e3e3e] text-[#f5e6c7]" required />
               </div>
               <div>
