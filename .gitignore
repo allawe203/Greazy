@@ -3,5 +3,6 @@ dist
 .DS_Store
 server/public
 vite.config.ts.*
-*.tar.gzattached_assets/vecteezy_restaurant-design-tableware-waiting-for-the-guests-an_1768668278535.mp4
+*.tar.gz
 attached_assets/vecteezy_restaurant-design-tableware-waiting-for-the-guests-an_1768668278535.mp4
+.google_maps_url.json
